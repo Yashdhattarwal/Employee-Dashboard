@@ -21,6 +21,10 @@ import Acknowledgement from './models/Acknowledgement.js';
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
+// Fallback secret to ensure sessions persist across restarts if env var is missing
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'rtn_employee_portal_secure_secret_2026';
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
