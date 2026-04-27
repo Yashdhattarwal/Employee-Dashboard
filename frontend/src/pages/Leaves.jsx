@@ -83,7 +83,7 @@ const Leaves = () => {
             </thead>
             <tbody>
               {leaves.map((l) => (
-                <tr key={l._id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                <tr key={l.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
                   {user.role !== 'employee' && (
                     <td className="table-cell font-semibold text-slate-800">{l.user?.name || 'Self'}</td>
                   )}
