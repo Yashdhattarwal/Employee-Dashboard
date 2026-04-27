@@ -8,8 +8,9 @@ import Leave from '../models/Leave.js';
 export const createUser = async (req, res) => {
   try {
     const { name, email, password, role, managerId, teamId } = req.body;
+    const lowerEmail = email.toLowerCase();
 
-    const userExists = await User.findOne({ where: { email } });
+    const userExists = await User.findOne({ where: { email: lowerEmail } });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
     
     // Auto generate employeeId in sequence
@@ -31,7 +32,7 @@ export const createUser = async (req, res) => {
 
     const user = await User.create({
       name,
-      email,
+      email: lowerEmail,
       password: hashedPassword,
       role,
       managerId: managerId || null,

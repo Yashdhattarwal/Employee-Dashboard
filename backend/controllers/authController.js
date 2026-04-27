@@ -19,8 +19,9 @@ const generateToken = (res, userId) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const lowerEmail = email.toLowerCase();
     const user = await User.findOne({ 
-      where: { email },
+      where: { email: lowerEmail },
       include: [{ model: User, as: 'manager', attributes: ['name'] }]
     });
 
