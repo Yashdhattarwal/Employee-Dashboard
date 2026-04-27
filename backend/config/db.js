@@ -4,23 +4,40 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dbPath = path.resolve(__dirname, '..', 'database.sqlite');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: dbPath,
-  logging: false,
-});
+// Use PostgreSQL for production (Supabase) and SQLite for local development
+const isProduction = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL;
+
+let sequelize;
+
+if (isProduction && process.env.DATABASE_URL) {
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    protocol: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false, // Required for Supabase
+      },
+    },
+    logging: false,
+  });
+} else {
+  const dbPath = path.resolve(__dirname, '..', 'database.sqlite');
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: dbPath,
+    logging: false,
+  });
+}
 
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('SQLite Database Connected at:', dbPath);
-    // Using force: false and sync() to avoid validation errors with alter
+    console.log(isProduction ? 'Cloud Database (PostgreSQL) Connected.' : 'Local Database (SQLite) Connected.');
     await sequelize.sync(); 
   } catch (error) {
     console.error('Database connection error:', error.message);
-    console.error(error);
     process.exit(1);
   }
 };
