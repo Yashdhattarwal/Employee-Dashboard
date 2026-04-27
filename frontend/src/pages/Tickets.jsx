@@ -25,7 +25,7 @@ const Tickets = () => {
       const { data } = await axios.get(endpoint, { withCredentials: true });
       setTickets(data);
       if (selectedTicket) {
-        const updated = data.find(t => t._id === selectedTicket._id);
+        const updated = data.find(t => t.id === selectedTicket.id);
         if (updated) setSelectedTicket(updated);
       }
     } catch (err) {
@@ -55,7 +55,7 @@ const Tickets = () => {
     e.preventDefault();
     if (!comment.trim()) return;
     try {
-      await axios.post(`/api/tickets/${selectedTicket._id}/comments`, { text: comment }, { withCredentials: true });
+      await axios.post(`/api/tickets/${selectedTicket.id}/comments`, { text: comment }, { withCredentials: true });
       setComment('');
       fetchTickets();
     } catch (err) {
@@ -150,7 +150,7 @@ const Tickets = () => {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                    <div className="flex gap-2">
-                     <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">Ticket #{selectedTicket._id}</span>
+                     <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">Ticket #{selectedTicket.id}</span>
                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
                         selectedTicket.priority === 'High' ? 'bg-danger/10 text-danger' : 
                         selectedTicket.priority === 'Medium' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
@@ -207,7 +207,7 @@ const Tickets = () => {
                 {(user.role === 'admin' || user.role === 'manager') && selectedTicket.status !== 'Resolved' && (
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => handleStatusUpdate(selectedTicket._id, 'Resolved')}
+                      onClick={() => handleStatusUpdate(selectedTicket.id, 'Resolved')}
                       className="flex-1 bg-success text-white py-2.5 rounded-xl text-xs font-bold hover:bg-success/90 transition-all flex items-center justify-center gap-2"
                     >
                       <CheckCircle size={14} />
@@ -215,7 +215,7 @@ const Tickets = () => {
                     </button>
                     {user.role === 'manager' && selectedTicket.status !== 'Escalated' && (
                       <button 
-                        onClick={() => handleEscalate(selectedTicket._id)}
+                        onClick={() => handleEscalate(selectedTicket.id)}
                         className="flex-1 bg-primary text-white py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
                       >
                         <Shield size={14} />

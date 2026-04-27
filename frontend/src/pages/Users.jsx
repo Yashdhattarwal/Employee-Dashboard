@@ -83,7 +83,7 @@ const Users = () => {
           </thead>
           <tbody>
             {users.map(u => (
-              <tr key={u._id} className="hover:bg-slate-50 transition-colors">
+              <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                 <td className="table-cell font-medium text-slate-500">{u.employeeId}</td>
                 <td className="table-cell font-medium">{u.name}</td>
                 <td className="table-cell">{u.email}</td>
@@ -96,7 +96,7 @@ const Users = () => {
                 <td className="table-cell">{u.manager?.name || '-'}</td>
                 <td className="table-cell">
                   <button 
-                    onClick={() => handleStatusToggle(u._id, u.activeStatus)}
+                    onClick={() => handleStatusToggle(u.id, u.activeStatus)}
                     className={`px-3 py-1 text-xs font-medium rounded-full transition-all flex items-center gap-1 ${u.activeStatus ? 'bg-success/10 text-success hover:bg-success/20' : 'bg-danger/10 text-danger hover:bg-danger/20'}`}
                   >
                     {u.activeStatus ? <UserCheck size={12} /> : <UserX size={12} />}
@@ -106,8 +106,8 @@ const Users = () => {
                 <td className="table-cell text-right">
                   <div className="flex justify-end gap-2">
                     <button 
-                      onClick={() => handleDelete(u._id)}
-                      disabled={u._id === currentUser._id || u._id === currentUser.id}
+                      onClick={() => handleDelete(u.id)}
+                      disabled={u.id === currentUser.id}
                       className="p-2 text-slate-400 hover:text-danger disabled:opacity-30 transition-colors"
                       title="Delete User"
                     >
@@ -183,7 +183,7 @@ const Users = () => {
                     >
                       <option value="">Select Manager</option>
                       {managers.map(m => (
-                        <option key={m._id} value={m._id}>{m.name} ({m.employeeId})</option>
+                        <option key={m.id} value={m.id}>{m.name} ({m.employeeId})</option>
                       ))}
                     </select>
                   </div>

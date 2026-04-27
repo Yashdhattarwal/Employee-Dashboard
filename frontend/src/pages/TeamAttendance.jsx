@@ -49,7 +49,7 @@ const TeamManagement = () => {
   const handleSaveRecord = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...formData, userId: editingId ? formData.userId : selectedEmployee._id };
+      const payload = { ...formData, userId: editingId ? formData.userId : selectedEmployee.id };
       await axios.post('/api/attendance', payload, { withCredentials: true });
       setShowModal(false);
       setEditingId(null);
@@ -71,7 +71,7 @@ const TeamManagement = () => {
   };
 
   const handleEditClick = (r) => {
-    setEditingId(r._id);
+    setEditingId(r.id);
     setFormData({
       userId: r.userId,
       date: r.date,
@@ -88,7 +88,7 @@ const TeamManagement = () => {
     e.employeeId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const employeeRecords = selectedEmployee ? allRecords.filter(r => r.userId === selectedEmployee._id) : [];
+  const employeeRecords = selectedEmployee ? allRecords.filter(r => r.userId === selectedEmployee.id) : [];
 
   if (loading && employees.length === 0) return <div className="p-12 text-center text-slate-500">Loading team data...</div>;
 
@@ -136,7 +136,7 @@ const TeamManagement = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEmployees.map(emp => (
             <div 
-              key={emp._id} 
+              key={emp.id} 
               onClick={() => setSelectedEmployee(emp)}
               className="glass-panel p-5 cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all group border-transparent border-2"
             >
@@ -210,7 +210,7 @@ const TeamManagement = () => {
               </thead>
               <tbody>
                 {employeeRecords.map((r) => (
-                  <tr key={r._id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                  <tr key={r.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
                     <td className="table-cell font-medium text-slate-600">{r.date}</td>
                     <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
                     <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
@@ -229,7 +229,7 @@ const TeamManagement = () => {
                         <button onClick={() => handleEditClick(r)} className="p-2 text-slate-400 hover:text-primary transition-colors">
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDeleteRecord(r._id)} className="p-2 text-slate-400 hover:text-danger transition-colors">
+                        <button onClick={() => handleDeleteRecord(r.id)} className="p-2 text-slate-400 hover:text-danger transition-colors">
                           <Trash2 size={16} />
                         </button>
                       </div>
