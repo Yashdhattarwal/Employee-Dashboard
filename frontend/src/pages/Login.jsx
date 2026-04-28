@@ -34,12 +34,12 @@ const Login = () => {
         />
       </div>
 
-      {/* Subtle overlay & blur to ensure the form is readable */}
-      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]"></div>
+      {/* Subtle overlay to ensure the form is readable without blur */}
+      <div className="absolute inset-0 bg-slate-950/10"></div>
 
       {/* Transparent Login Table / Form */}
       <div className="relative z-10 w-full max-w-md px-4 py-8">
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 text-white">
+        <div className="bg-slate-950/30 border border-white/20 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 text-white">
           <div>
             <div className="flex justify-center">
               <div className="w-12 h-12 bg-primary/80 rounded-xl flex items-center justify-center shadow-lg">
