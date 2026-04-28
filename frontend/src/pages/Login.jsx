@@ -24,104 +24,102 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex lg:grid lg:grid-cols-2 bg-slate-50 relative overflow-hidden">
-      {/* Left side: Form */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 relative z-10 bg-slate-50">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
+    <div className="min-h-screen flex items-center justify-center relative bg-slate-950 overflow-hidden">
+      {/* Background Image - contain ensures NO cropping */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          className="w-full h-full object-contain"
+          src={teamPic}
+          alt="Our Team Background"
+        />
+      </div>
+
+      {/* Subtle overlay & blur to ensure the form is readable */}
+      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]"></div>
+
+      {/* Transparent Login Table / Form */}
+      <div className="relative z-10 w-full max-w-md px-4 py-8">
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 text-white">
           <div>
-            <div className="flex justify-center lg:justify-start">
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+            <div className="flex justify-center">
+              <div className="w-12 h-12 bg-primary/80 rounded-xl flex items-center justify-center shadow-lg">
                 <Building2 size={24} className="text-white" />
               </div>
             </div>
-            <h2 className="mt-6 text-center lg:text-left text-3xl font-extrabold text-slate-900">
+            <h2 className="mt-4 text-center text-2xl font-extrabold text-white">
               Sign in to your account
             </h2>
-            <p className="mt-2 text-center lg:text-left text-sm text-slate-600">
-              RTN Employee Dashbord
+            <p className="mt-1 text-center text-sm text-slate-300">
+              RTN Employee Dashboard
             </p>
           </div>
 
-          <div className="mt-8">
-            <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 rounded-xl sm:px-10 border border-slate-100">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-lg text-sm">
-                    {error}
-                  </div>
-                )}
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Email address
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input-field"
-                      placeholder="admin@employeeportal.com"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">
-                    Password
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="input-field"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input
-                      id="remember-me"
-                      name="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">
-                      Remember me
-                    </label>
-                  </div>
-
-                  <div className="text-sm">
-                    <a href="#" className="font-medium text-primary hover:text-blue-500">
-                      Forgot your password?
-                    </a>
-                  </div>
-                </div>
-
-                <div>
-                  <button type="submit" className="w-full flex justify-center btn-primary py-2.5">
-                    Sign in
-                  </button>
-                </div>
-              </form>
+          <form className="space-y-6 mt-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-danger/20 border border-danger/30 text-white px-4 py-3 rounded-lg text-sm text-center">
+                {error}
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-200">
+                Email address
+              </label>
+              <div className="mt-1">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field bg-white/10 border-white/20 text-white placeholder-slate-400 focus:bg-white/20"
+                  placeholder="admin@employeeportal.com"
+                />
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Right side: Image */}
-      <div className="hidden lg:block relative w-full">
-        <img
-          className="absolute inset-0 h-full w-full object-cover"
-          src={teamPic}
-          alt="Our Team"
-        />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/60 via-slate-900/30 to-transparent"></div>
+            <div>
+              <label className="block text-sm font-medium text-slate-200">
+                Password
+              </label>
+              <div className="mt-1">
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field bg-white/10 border-white/20 text-white placeholder-slate-400 focus:bg-white/20"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-primary focus:ring-primary border-white/20 bg-white/10 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-200">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-blue-400 hover:text-blue-300">
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <button type="submit" className="w-full flex justify-center btn-primary py-2.5 bg-primary/90 hover:bg-primary border-0">
+                Sign in
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
