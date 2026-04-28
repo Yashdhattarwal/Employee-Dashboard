@@ -12,6 +12,7 @@ import attendanceRoutes from './routes/attendanceRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import payrollRoutes from './routes/payrollRoutes.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
 import Leave from './models/Leave.js';
@@ -49,6 +50,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payroll', payrollRoutes);
 
 // Serve Frontend
 const distPath = path.join(__dirname, '../frontend/dist');

@@ -35,7 +35,7 @@ export const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log(isProduction ? 'Cloud Database (PostgreSQL) Connected.' : 'Local Database (SQLite) Connected.');
-    await sequelize.sync(); 
+    await sequelize.sync({ alter: true }); 
   } catch (error) {
     console.error('Database connection error:', error.message);
     process.exit(1);

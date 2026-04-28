@@ -7,7 +7,7 @@ import Leave from '../models/Leave.js';
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, managerId, teamId } = req.body;
+    const { name, email, password, role, managerId, teamId, salaryINR, salaryUSD, salaryCurrency, bankName, accountHolderName, accountNumber, ifscCode, branchName } = req.body;
     const lowerEmail = email.toLowerCase();
 
     const userExists = await User.findOne({ where: { email: lowerEmail } });
@@ -38,6 +38,14 @@ export const createUser = async (req, res) => {
       managerId: managerId || null,
       teamId,
       employeeId,
+      salaryINR: salaryINR || null,
+      salaryUSD: salaryUSD || null,
+      salaryCurrency: salaryCurrency || 'INR',
+      bankName: bankName || null,
+      accountHolderName: accountHolderName || null,
+      accountNumber: accountNumber || null,
+      ifscCode: ifscCode || null,
+      branchName: branchName || null,
     });
 
     res.status(201).json({

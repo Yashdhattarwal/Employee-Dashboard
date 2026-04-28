@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LayoutDashboard, Users, Calendar, Ticket, FileText, Settings, Bell, X } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Ticket, FileText, Settings, Bell, X, DollarSign } from 'lucide-react';
 import clsx from 'clsx';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -13,6 +13,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const items = [
       { name: 'Dashboard', path: `/${base}`, icon: LayoutDashboard },
       { name: 'My Attendance', path: `/${base}/attendance`, icon: Calendar },
+      { name: 'Payroll', path: `/${base}/payroll`, icon: DollarSign },
     ];
 
     if (user?.role === 'admin' || user?.role === 'manager') {

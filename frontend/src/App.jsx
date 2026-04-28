@@ -13,6 +13,7 @@ import Tickets from './pages/Tickets';
 import Users from './pages/Users';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
+import Payroll from './pages/Payroll';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AuthContext);
@@ -55,6 +56,7 @@ function App() {
           <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['admin']}><Tickets /></ProtectedRoute>} />
           <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><Notifications /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><Users /></ProtectedRoute>} />
+          <Route path="/admin/payroll" element={<ProtectedRoute allowedRoles={['admin']}><Payroll /></ProtectedRoute>} />
 
           {/* Manager Routes */}
           <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
@@ -74,6 +76,7 @@ function App() {
           <Route path="/employee/attendance" element={<ProtectedRoute allowedRoles={['employee']}><Attendance /></ProtectedRoute>} />
           <Route path="/employee/leaves" element={<ProtectedRoute allowedRoles={['employee']}><Leaves /></ProtectedRoute>} />
           <Route path="/employee/tickets" element={<ProtectedRoute allowedRoles={['employee']}><Tickets /></ProtectedRoute>} />
+          <Route path="/employee/payroll" element={<ProtectedRoute allowedRoles={['employee']}><Payroll /></ProtectedRoute>} />
         </Route>
       </Routes>
     </Router>

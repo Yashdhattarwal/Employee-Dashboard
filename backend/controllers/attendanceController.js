@@ -1,5 +1,6 @@
 import Attendance from '../models/Attendance.js';
 import User from '../models/User.js';
+import AttendanceCorrection from '../models/AttendanceCorrection.js';
 import { Op } from 'sequelize';
 
 export const getMyAttendance = async (req, res) => {
@@ -161,6 +162,41 @@ export const deleteAttendance = async (req, res) => {
 
     await attendance.destroy();
     res.json({ message: 'Record deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createCorrection = async (req, res) => {
+  try {
+    const { userId, comment, date } = req.body;
+    if (!userId || !comment || !date) {
+      return res.status(400).json({ message: 'User ID, date, and comment are required' });
+    }
+
+    const correction = await AttendanceCorrection.create({
+      userId,
+      managerId: req.user.id,
+      comment,
+      date,
+    });
+
+    res.json(correction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getCorrections = async (req, res) => {
+  try {
+    const corrections = await AttendanceCorrection.findAll({
+      include: [
+        { model: User, as: 'manager', attributes: ['name'] },
+        { model: User, as: 'user', attributes: ['name'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+    res.json(corrections);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

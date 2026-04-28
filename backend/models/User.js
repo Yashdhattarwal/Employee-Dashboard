@@ -45,6 +45,38 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  salaryINR: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  salaryUSD: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  salaryCurrency: {
+    type: DataTypes.STRING,
+    defaultValue: 'INR',
+  },
+  bankName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  accountHolderName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  accountNumber: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  ifscCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  branchName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
 User.belongsTo(User, { as: 'manager', foreignKey: 'managerId' });

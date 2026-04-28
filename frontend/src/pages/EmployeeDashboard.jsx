@@ -9,6 +9,8 @@ const EmployeeDashboard = () => {
   const { user } = useContext(AuthContext);
   const [attendance, setAttendance] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStatus = async () => {
@@ -29,10 +31,28 @@ const EmployeeDashboard = () => {
     }
   };
 
+  const fetchLeaves = async () => {
+    try {
+      const { data } = await axios.get('/api/leaves/my', { withCredentials: true });
+      setLeaves(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchTickets = async () => {
+    try {
+      const { data } = await axios.get('/api/tickets/my', { withCredentials: true });
+      setTickets(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await Promise.all([fetchStatus(), fetchActivities()]);
+      await Promise.all([fetchStatus(), fetchActivities(), fetchLeaves(), fetchTickets()]);
       setLoading(false);
     };
     init();
@@ -120,15 +140,32 @@ const EmployeeDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="glass-panel p-6">
-          <p className="text-slate-500 text-sm font-medium">Leave Balance</p>
-          <h3 className="text-3xl font-bold text-slate-800 mt-2">12 Days</h3>
-          <p className="text-slate-400 text-xs mt-1">Annual Leave Remaining</p>
+          <p className="text-slate-500 text-sm font-medium">Leave Balance (Current Month)</p>
+          {(() => {
+            const currentMonth = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
+            const used = leaves.filter(l => l.status === 'Approved' && l.fromDate && l.fromDate.startsWith(currentMonth)).length;
+            const remaining = Math.max(0, 1 - used);
+            return (
+              <>
+                <h3 className="text-3xl font-bold text-slate-800 mt-2">{remaining} Days Remaining</h3>
+                <p className="text-slate-400 text-xs mt-1">Used this month: {used} Day(s)</p>
+              </>
+            );
+          })()}
         </div>
         
         <div className="glass-panel p-6">
           <p className="text-slate-500 text-sm font-medium">My Tickets</p>
-          <h3 className="text-3xl font-bold text-slate-800 mt-2">1</h3>
-          <p className="text-slate-400 text-xs mt-1">In Progress</p>
+          {(() => {
+            const active = tickets.filter(t => t.status !== 'Resolved').length;
+            const pending = tickets.filter(t => t.status === 'Pending').length;
+            return (
+              <>
+                <h3 className="text-3xl font-bold text-slate-800 mt-2">{active} Active</h3>
+                <p className="text-slate-400 text-xs mt-1">Pending: {pending} | Total: {tickets.length}</p>
+              </>
+            );
+          })()}
         </div>
       </div>
 

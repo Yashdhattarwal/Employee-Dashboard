@@ -17,6 +17,8 @@ const TeamManagement = () => {
     userId: '', date: new Date().toISOString().split('T')[0], status: 'Present', checkIn: '09:00', checkOut: '17:00', remarks: ''
   });
 
+  const [corrections, setCorrections] = useState([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -28,13 +30,15 @@ const TeamManagement = () => {
         attEndpoint = '/api/attendance/team';
       }
 
-      const [empRes, attRes] = await Promise.all([
+      const [empRes, attRes, corrRes] = await Promise.all([
         axios.get(empEndpoint, { withCredentials: true }),
-        axios.get(attEndpoint, { withCredentials: true })
+        axios.get(attEndpoint, { withCredentials: true }),
+        axios.get('/api/attendance/corrections', { withCredentials: true }),
       ]);
 
       setEmployees(empRes.data);
       setAllRecords(attRes.data);
+      setCorrections(corrRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -49,8 +53,17 @@ const TeamManagement = () => {
   const handleSaveRecord = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...formData, userId: editingId ? formData.userId : selectedEmployee.id };
-      await axios.post('/api/attendance', payload, { withCredentials: true });
+      if (user.role === 'manager') {
+        const payload = { 
+          userId: editingId ? formData.userId : selectedEmployee.id, 
+          date: formData.date,
+          comment: formData.remarks || `Correction Request for ${formData.date}` 
+        };
+        await axios.post('/api/attendance/corrections', payload, { withCredentials: true });
+      } else {
+        const payload = { ...formData, userId: editingId ? formData.userId : selectedEmployee.id };
+        await axios.post('/api/attendance', payload, { withCredentials: true });
+      }
       setShowModal(false);
       setEditingId(null);
       fetchData();
@@ -225,14 +238,16 @@ const TeamManagement = () => {
                       </span>
                     </td>
                     <td className="table-cell text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEditClick(r)} className="p-2 text-slate-400 hover:text-primary transition-colors">
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDeleteRecord(r.id)} className="p-2 text-slate-400 hover:text-danger transition-colors">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                      {user.role === 'admin' && (
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => handleEditClick(r)} className="p-2 text-slate-400 hover:text-primary transition-colors">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDeleteRecord(r.id)} className="p-2 text-slate-400 hover:text-danger transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -244,6 +259,33 @@ const TeamManagement = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Correction Requests List */}
+          <div className="glass-panel p-6 mt-6">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+              <Clock size={20} className="text-primary" />
+              Attendance Correction Requests
+            </h2>
+            <div className="space-y-3">
+              {corrections.map(c => (
+                <div key={c.id} className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <p className="text-sm font-bold text-slate-800">
+                      For: {c.user?.name} | Date: {c.date}
+                    </p>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {new Date(c.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-sm mt-2">"{c.comment}"</p>
+                  <p className="text-xs font-semibold text-primary mt-1">Requested by Manager: {c.manager?.name}</p>
+                </div>
+              ))}
+              {corrections.length === 0 && (
+                <p className="text-sm text-slate-400 italic text-center py-4">No correction requests found.</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -253,7 +295,9 @@ const TeamManagement = () => {
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
               <X size={20} />
             </button>
-            <h2 className="text-xl font-bold text-slate-800 mb-6">{editingId ? 'Edit' : 'New'} Record for {selectedEmployee?.name}</h2>
+            <h2 className="text-xl font-bold text-slate-800 mb-6">
+              {user.role === 'manager' ? 'Request Attendance Correction' : `${editingId ? 'Edit' : 'New'} Record for ${selectedEmployee?.name}`}
+            </h2>
             
             <form onSubmit={handleSaveRecord} className="space-y-4">
               <div>
@@ -262,30 +306,45 @@ const TeamManagement = () => {
                   value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} 
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              {user.role === 'manager' ? (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Check In</label>
-                  <input type="time" className="input-field mt-1" 
-                    value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} 
+                  <label className="block text-sm font-medium text-slate-700">Correction Request / Comment</label>
+                  <textarea 
+                    className="input-field mt-1 h-24" 
+                    placeholder="e.g. Mark employee present, wrong check-in time..."
+                    value={formData.remarks} 
+                    onChange={e => setFormData({...formData, remarks: e.target.value})}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Check Out</label>
-                  <input type="time" className="input-field mt-1" 
-                    value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} 
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Status</label>
-                <select className="input-field mt-1" 
-                  value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                >
-                  <option value="Present">Present</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Absent">Absent</option>
-                </select>
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Check In</label>
+                      <input type="time" className="input-field mt-1" 
+                        value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Check Out</label>
+                      <input type="time" className="input-field mt-1" 
+                        value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} 
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Status</label>
+                    <select className="input-field mt-1" 
+                      value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
+                    >
+                      <option value="Present">Present</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Absent">Absent</option>
+                    </select>
+                  </div>
+                </>
+              )}
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" className="btn-primary flex-1">{editingId ? 'Update' : 'Save'}</button>

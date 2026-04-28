@@ -11,7 +11,9 @@ const Users = () => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    name: '', email: '', password: '', role: 'employee', managerId: ''
+    name: '', email: '', password: '', role: 'employee', managerId: '',
+    salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
+    bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: ''
   });
 
   const fetchUsers = async () => {
@@ -34,7 +36,10 @@ const Users = () => {
       setError('');
       await axios.post('/api/users', formData, { withCredentials: true });
       setShowModal(false);
-      setFormData({ name: '', email: '', password: '', role: 'employee', managerId: '' });
+      setFormData({ name: '', email: '', password: '', role: 'employee', managerId: '',
+        salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
+        bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: ''
+      });
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add user');
@@ -128,7 +133,7 @@ const Users = () => {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative animate-in fade-in zoom-in duration-200">
             <button 
               onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors"
@@ -161,6 +166,69 @@ const Users = () => {
                 <input required type="password" placeholder="Min 6 characters" className="input-field mt-1" 
                   value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} 
                 />
+              </div>
+
+              {/* Salary Fields */}
+              <div className="border-t border-slate-100 pt-4">
+                <h3 className="text-sm font-bold text-slate-800 mb-2">Salary Details (Optional)</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Salary in INR</label>
+                    <input type="number" className="input-field mt-1" placeholder="INR Amount"
+                      value={formData.salaryINR} onChange={e => setFormData({...formData, salaryINR: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Salary in USD</label>
+                    <input type="number" className="input-field mt-1" placeholder="USD Amount"
+                      value={formData.salaryUSD} onChange={e => setFormData({...formData, salaryUSD: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Preferred Currency</label>
+                    <select className="input-field mt-1" value={formData.salaryCurrency} onChange={e => setFormData({...formData, salaryCurrency: e.target.value})}>
+                      <option value="INR">INR</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bank Details */}
+              <div className="border-t border-slate-100 pt-4">
+                <h3 className="text-sm font-bold text-slate-800 mb-2">Bank Details (Optional)</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Bank Name</label>
+                    <input type="text" className="input-field mt-1" 
+                      value={formData.bankName} onChange={e => setFormData({...formData, bankName: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Account Holder Name</label>
+                    <input type="text" className="input-field mt-1" 
+                      value={formData.accountHolderName} onChange={e => setFormData({...formData, accountHolderName: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Account Number</label>
+                    <input type="text" className="input-field mt-1" 
+                      value={formData.accountNumber} onChange={e => setFormData({...formData, accountNumber: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">IFSC Code</label>
+                    <input type="text" className="input-field mt-1" 
+                      value={formData.ifscCode} onChange={e => setFormData({...formData, ifscCode: e.target.value})} 
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-slate-700">Branch Name</label>
+                    <input type="text" className="input-field mt-1" 
+                      value={formData.branchName} onChange={e => setFormData({...formData, branchName: e.target.value})} 
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
