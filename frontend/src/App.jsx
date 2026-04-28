@@ -77,6 +77,7 @@ function App() {
           <Route path="/employee/leaves" element={<ProtectedRoute allowedRoles={['employee']}><Leaves /></ProtectedRoute>} />
           <Route path="/employee/tickets" element={<ProtectedRoute allowedRoles={['employee']}><Tickets /></ProtectedRoute>} />
           <Route path="/employee/payroll" element={<ProtectedRoute allowedRoles={['employee']}><Payroll /></ProtectedRoute>} />
+          <Route path="/employee/notifications" element={<ProtectedRoute allowedRoles={['employee']}><Notifications /></ProtectedRoute>} />
         </Route>
       </Routes>
     </Router>
