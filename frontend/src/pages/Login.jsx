@@ -24,7 +24,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative bg-slate-950 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-end md:pr-12 lg:pr-24 relative bg-slate-950 overflow-hidden">
       {/* Background Image - contain ensures NO cropping */}
       <div className="absolute inset-0 flex items-center justify-center">
         <img
