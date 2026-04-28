@@ -24,7 +24,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-end justify-end p-6 md:p-12 relative bg-slate-950 overflow-hidden">
+    <div className="min-h-screen relative bg-slate-950 overflow-hidden">
       {/* Background Image - contain ensures NO cropping */}
       <div className="absolute inset-0 flex items-center justify-center">
         <img
@@ -38,8 +38,8 @@ const Login = () => {
       <div className="absolute inset-0 bg-slate-950/10"></div>
 
       {/* Transparent Login Table / Form */}
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="bg-slate-950/40 border border-white/20 py-5 px-5 shadow-2xl rounded-2xl text-white">
+      <div className="absolute bottom-4 right-4 w-full max-w-xs z-20">
+        <div className="bg-slate-950/60 border border-white/20 py-4 px-4 shadow-2xl rounded-2xl text-white">
           <div>
             <div className="flex justify-center">
               <div className="w-12 h-12 bg-primary/80 rounded-xl flex items-center justify-center shadow-lg">
@@ -54,7 +54,7 @@ const Login = () => {
             </p>
           </div>
 
-          <form className="space-y-6 mt-6" onSubmit={handleSubmit}>
+          <form className="space-y-3 mt-3" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-danger/20 border border-danger/30 text-white px-4 py-3 rounded-lg text-sm text-center">
                 {error}
