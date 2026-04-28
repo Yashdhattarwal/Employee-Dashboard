@@ -24,7 +24,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-end md:pr-12 lg:pr-24 relative bg-slate-950 overflow-hidden">
+    <div className="min-h-screen flex items-end justify-end p-6 md:p-12 relative bg-slate-950 overflow-hidden">
       {/* Background Image - contain ensures NO cropping */}
       <div className="absolute inset-0 flex items-center justify-center">
         <img
@@ -38,8 +38,8 @@ const Login = () => {
       <div className="absolute inset-0 bg-slate-950/10"></div>
 
       {/* Transparent Login Table / Form */}
-      <div className="relative z-10 w-full max-w-md px-4 py-8">
-        <div className="bg-slate-950/30 border border-white/20 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 text-white">
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="bg-slate-950/40 border border-white/20 py-5 px-5 shadow-2xl rounded-2xl text-white">
           <div>
             <div className="flex justify-center">
               <div className="w-12 h-12 bg-primary/80 rounded-xl flex items-center justify-center shadow-lg">
