@@ -2,7 +2,6 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
-import teamPic from '../assets/team_pic.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -24,45 +23,34 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative bg-slate-950 overflow-hidden">
-      {/* Background Image - contain ensures NO cropping */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <img
-          className="w-full h-full object-contain"
-          src={teamPic}
-          alt="Our Team Background"
-        />
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-5"></div>
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="flex justify-center">
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
+            <Building2 size={32} className="text-white" />
+          </div>
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
+          Sign in to your account
+        </h2>
+        <p className="mt-2 text-center text-sm text-slate-600">
+          RTN Employee Dashbord
+        </p>
       </div>
 
-      {/* Subtle overlay to ensure the form is readable without blur */}
-      <div className="absolute inset-0 bg-slate-950/10"></div>
-
-      {/* Transparent Login Table / Form */}
-      <div className="absolute bottom-4 right-4 w-full max-w-xs z-20">
-        <div className="bg-slate-950/60 border border-white/20 py-4 px-4 shadow-2xl rounded-2xl text-white">
-          <div>
-            <div className="flex justify-center">
-              <div className="w-12 h-12 bg-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-                <Building2 size={24} className="text-white" />
-              </div>
-            </div>
-            <h2 className="mt-4 text-center text-2xl font-extrabold text-white">
-              Sign in to your account
-            </h2>
-            <p className="mt-1 text-center text-sm text-slate-300">
-              RTN Employee Dashboard
-            </p>
-          </div>
-
-          <form className="space-y-3 mt-3" onSubmit={handleSubmit}>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-xl sm:px-10 border border-slate-100">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-danger/20 border border-danger/30 text-white px-4 py-3 rounded-lg text-sm text-center">
+              <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
             
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-slate-700">
                 Email address
               </label>
               <div className="mt-1">
@@ -71,14 +59,14 @@ const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field bg-white/10 border-white/20 text-white placeholder-slate-400 focus:bg-white/20"
+                  className="input-field"
                   placeholder="admin@employeeportal.com"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-slate-700">
                 Password
               </label>
               <div className="mt-1">
@@ -87,7 +75,7 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field bg-white/10 border-white/20 text-white placeholder-slate-400 focus:bg-white/20"
+                  className="input-field"
                   placeholder="••••••••"
                 />
               </div>
@@ -99,22 +87,22 @@ const Login = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-white/20 bg-white/10 rounded"
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-200">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-blue-400 hover:text-blue-300">
+                <a href="#" className="font-medium text-primary hover:text-blue-500">
                   Forgot your password?
                 </a>
               </div>
             </div>
 
             <div>
-              <button type="submit" className="w-full flex justify-center btn-primary py-2.5 bg-primary/90 hover:bg-primary border-0">
+              <button type="submit" className="w-full flex justify-center btn-primary py-2.5">
                 Sign in
               </button>
             </div>
