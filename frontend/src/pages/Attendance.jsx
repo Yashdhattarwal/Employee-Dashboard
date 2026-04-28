@@ -37,6 +37,7 @@ const Attendance = () => {
                 <th className="table-header">Check In</th>
                 <th className="table-header">Check Out</th>
                 <th className="table-header">Break Info</th>
+                <th className="table-header">Type</th>
                 <th className="table-header">Status</th>
               </tr>
             </thead>
@@ -63,6 +64,15 @@ const Attendance = () => {
                   </td>
                   <td className="table-cell text-xs text-slate-500">
                     {r.breakIn ? `Break: ${r.breakIn} - ${r.breakOut || '...'}` : 'No Break Recorded'}
+                  </td>
+                  <td className="table-cell">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                      r.status === 'On Leave' ? 'bg-amber-500/10 text-amber-600' :
+                      r.status === 'Absent' ? 'bg-danger/10 text-danger' :
+                      'bg-success/10 text-success'
+                    }`}>
+                      {r.status === 'On Leave' ? 'On Leave' : r.status === 'Absent' ? 'Absent' : 'Present'}
+                    </span>
                   </td>
                   <td className="table-cell">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${

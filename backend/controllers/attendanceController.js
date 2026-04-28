@@ -201,3 +201,26 @@ export const getCorrections = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const updateCorrectionStatus = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only Admin can update request status' });
+    }
+
+    const { status } = req.body;
+    if (!['Approved', 'Rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status provided' });
+    }
+
+    const correction = await AttendanceCorrection.findByPk(req.params.id);
+    if (!correction) return res.status(404).json({ message: 'Correction request not found' });
+
+    correction.status = status;
+    await correction.save();
+
+    res.json(correction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -45,9 +45,14 @@ export const getTeamTickets = async (req, res) => {
 
     const tickets = await Ticket.findAll({ 
       where: {
-        [Op.or]: [
-          { assignedTo: req.user.id },
-          { userId: { [Op.in]: subordinateIds } }
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { assignedTo: req.user.id },
+              { userId: { [Op.in]: subordinateIds } }
+            ]
+          },
+          { hiddenFromManager: false }
         ]
       },
       include: [
@@ -116,6 +121,11 @@ export const addComment = async (req, res) => {
         userId: req.user.id,
         text,
       });
+
+      if (req.user.role === 'admin' && ticket.status === 'Escalated') {
+        ticket.hiddenFromManager = true;
+        await ticket.save();
+      }
       // reload ticket to include comments and user info
       const updatedTicket = await Ticket.findByPk(ticket.id, {
         include: [

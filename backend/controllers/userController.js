@@ -117,12 +117,12 @@ export const getDashboardStats = async (req, res) => {
 
     if (isAdmin) {
       totalStaff = await User.count({ where: { role: { [Op.or]: ['employee', 'manager'] } } });
-      presentToday = await Attendance.count({ where: { date: today, status: 'Present' } });
+      presentToday = await Attendance.count({ where: { date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } } });
       onLeave = await Attendance.count({ where: { date: today, status: 'On Leave' } });
       pendingTickets = await Ticket.count({ where: { status: { [Op.not]: 'Resolved' } } });
     } else {
       totalStaff = subordinateIds.length;
-      presentToday = await Attendance.count({ where: { userId: { [Op.in]: subordinateIds }, date: today, status: 'Present' } });
+      presentToday = await Attendance.count({ where: { userId: { [Op.in]: subordinateIds }, date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } } });
       onLeave = await Attendance.count({ where: { userId: { [Op.in]: subordinateIds }, date: today, status: 'On Leave' } });
       pendingTickets = await Ticket.count({ 
         where: { 
@@ -142,7 +142,7 @@ export const getDashboardStats = async (req, res) => {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toLocaleDateString('en-CA');
-      const count = await Attendance.count({ where: { ...attendanceFilter, date: dateStr, status: 'Present' } });
+      const count = await Attendance.count({ where: { ...attendanceFilter, date: dateStr, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } } });
       attendanceTrend.push({ date: dateStr.split('-').slice(1).join('/'), count });
     }
 

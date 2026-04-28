@@ -32,6 +32,10 @@ const Ticket = sequelize.define('Ticket', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  hiddenFromManager: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 });
 
 const Comment = sequelize.define('Comment', {

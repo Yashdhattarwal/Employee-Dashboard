@@ -83,6 +83,15 @@ const TeamManagement = () => {
     }
   };
 
+  const handleUpdateCorrectionStatus = async (id, status) => {
+    try {
+      await axios.put(`/api/attendance/corrections/${id}`, { status }, { withCredentials: true });
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status');
+    }
+  };
+
   const handleEditClick = (r) => {
     setEditingId(r.id);
     setFormData({
@@ -217,6 +226,7 @@ const TeamManagement = () => {
                   <th className="table-header">Date</th>
                   <th className="table-header">Check In</th>
                   <th className="table-header">Check Out</th>
+                  <th className="table-header">Type</th>
                   <th className="table-header">Status</th>
                   <th className="table-header text-right">Actions</th>
                 </tr>
@@ -228,10 +238,19 @@ const TeamManagement = () => {
                     <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
                     <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
                     <td className="table-cell">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                        r.status === 'On Leave' ? 'bg-amber-500/10 text-amber-600' :
+                        r.status === 'Absent' ? 'bg-danger/10 text-danger' :
+                        'bg-success/10 text-success'
+                      }`}>
+                        {r.status === 'On Leave' ? 'On Leave' : r.status === 'Absent' ? 'Absent' : 'Present'}
+                      </span>
+                    </td>
+                    <td className="table-cell">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                         r.status === 'Present' ? 'bg-success/10 text-success' :
                         r.status === 'On Break' ? 'bg-amber-500/10 text-amber-600' :
-                        r.status === 'On Leave' ? 'bg-warning/10 text-warning' :
+                        r.status === 'Checked Out' ? 'bg-slate-500/10 text-slate-600' :
                         'bg-danger/10 text-danger'
                       }`}>
                         {r.status}
@@ -278,7 +297,24 @@ const TeamManagement = () => {
                     </span>
                   </div>
                   <p className="text-slate-600 text-sm mt-2">"{c.comment}"</p>
-                  <p className="text-xs font-semibold text-primary mt-1">Requested by Manager: {c.manager?.name}</p>
+                  <div className="flex justify-between items-center mt-2 flex-wrap gap-2">
+                    <p className="text-xs font-semibold text-primary">Requested by Manager: {c.manager?.name}</p>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`px-2 py-0.5 rounded-full font-bold ${
+                        c.status === 'Approved' ? 'bg-success/10 text-success' :
+                        c.status === 'Rejected' ? 'bg-danger/10 text-danger' :
+                        'bg-warning/10 text-warning'
+                      }`}>
+                        {c.status || 'Pending'}
+                      </span>
+                      {user?.role === 'admin' && (c.status === 'Pending' || !c.status) && (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleUpdateCorrectionStatus(c.id, 'Approved')} className="p-1 px-2 bg-success text-white rounded text-[10px] font-bold hover:bg-success/80">Approve</button>
+                          <button onClick={() => handleUpdateCorrectionStatus(c.id, 'Rejected')} className="p-1 px-2 bg-danger text-white rounded text-[10px] font-bold hover:bg-danger/80">Disapprove</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
               {corrections.length === 0 && (

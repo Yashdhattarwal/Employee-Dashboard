@@ -8,7 +8,8 @@ import {
   getAttendanceStatus,
   deleteAttendance,
   createCorrection,
-  getCorrections
+  getCorrections,
+  updateCorrectionStatus
 } from '../controllers/attendanceController.js';
 import { protect, admin, manager } from '../middleware/authMiddleware.js';
 
@@ -21,6 +22,7 @@ router.route('/team').get(protect, manager, getTeamAttendance);
 router.route('/all').get(protect, admin, getAllAttendance);
 router.route('/').post(protect, admin, markAttendance);
 router.route('/corrections').post(protect, manager, createCorrection).get(protect, getCorrections);
+router.put('/corrections/:id', protect, admin, updateCorrectionStatus);
 router.route('/:id').delete(protect, admin, deleteAttendance);
 
 export default router;

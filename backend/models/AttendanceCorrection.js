@@ -24,6 +24,11 @@ const AttendanceCorrection = sequelize.define('AttendanceCorrection', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'Pending',
+  },
 });
 
 AttendanceCorrection.belongsTo(User, { as: 'manager', foreignKey: 'managerId' });
