@@ -62,11 +62,11 @@ function App() {
           <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
           <Route path="/manager/attendance" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Attendance /></ProtectedRoute>} />
           <Route path="/manager/team-attendance" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><TeamAttendance /></ProtectedRoute>} />
-          <Route path="/employee/leaves" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}><Leaves /></ProtectedRoute>} />
-          <Route path="/employee/notifications" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}><Notifications /></ProtectedRoute>} />
-          <Route path="/employee/tickets" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}><Tickets /></ProtectedRoute>} />
+          <Route path="/manager/leaves" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Leaves /></ProtectedRoute>} />
           <Route path="/manager/notifications" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Notifications /></ProtectedRoute>} />
+          <Route path="/manager/tickets" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Tickets /></ProtectedRoute>} />
           <Route path="/manager/team" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Users /></ProtectedRoute>} />
+          <Route path="/manager/payroll" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Payroll /></ProtectedRoute>} />
 
           {/* General Routes */}
           <Route path="/profile" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
