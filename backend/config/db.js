@@ -1,6 +1,9 @@
 import { Sequelize } from 'sequelize';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,13 +14,13 @@ const isProduction = process.env.NODE_ENV === 'production' || process.env.DATABA
 let sequelize;
 
 if (isProduction && process.env.DATABASE_URL) {
+  const isMysql = process.env.DATABASE_URL.startsWith('mysql');
   sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    protocol: 'postgres',
+    dialect: isMysql ? 'mysql' : 'postgres',
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // Required for Supabase
+        rejectUnauthorized: false,
       },
     },
     logging: false,
@@ -34,7 +37,7 @@ if (isProduction && process.env.DATABASE_URL) {
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log(isProduction ? 'Cloud Database (PostgreSQL) Connected.' : 'Local Database (SQLite) Connected.');
+    console.log(isProduction ? `Cloud Database (${sequelize.getDialect().toUpperCase()}) Connected.` : 'Local Database (SQLite) Connected.');
     try {
       await sequelize.sync({ alter: true }); 
     } catch (syncError) {

@@ -97,6 +97,51 @@ export const updateUserStatus = async (req, res) => {
   }
 };
 
+export const updateUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const {
+      name, email, role, managerId, teamId,
+      salaryINR, salaryUSD, salaryCurrency,
+      bankName, accountHolderName, accountNumber, ifscCode, branchName,
+      password
+    } = req.body;
+
+    if (email && email.toLowerCase() !== user.email) {
+      const emailExists = await User.findOne({ where: { email: email.toLowerCase() } });
+      if (emailExists) return res.status(400).json({ message: 'Email already registered' });
+      user.email = email.toLowerCase();
+    }
+
+    if (name) user.name = name;
+    if (role) user.role = role;
+    user.managerId = managerId || null;
+    if (teamId !== undefined) user.teamId = teamId;
+    
+    if (salaryINR !== undefined) user.salaryINR = salaryINR || null;
+    if (salaryUSD !== undefined) user.salaryUSD = salaryUSD || null;
+    if (salaryCurrency) user.salaryCurrency = salaryCurrency;
+
+    if (bankName !== undefined) user.bankName = bankName || null;
+    if (accountHolderName !== undefined) user.accountHolderName = accountHolderName || null;
+    if (accountNumber !== undefined) user.accountNumber = accountNumber || null;
+    if (ifscCode !== undefined) user.ifscCode = ifscCode || null;
+    if (branchName !== undefined) user.branchName = branchName || null;
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+    res.json({ ...user.toJSON(), _id: user.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getDashboardStats = async (req, res) => {
   try {
     const isAdmin = req.user.role === 'admin';

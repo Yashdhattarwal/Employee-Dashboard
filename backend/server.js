@@ -13,6 +13,7 @@ import leaveRoutes from './routes/leaveRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
+import { processShiftAbsences } from './services/shiftService.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
 import Leave from './models/Leave.js';
@@ -92,6 +93,11 @@ const startServer = async () => {
   app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     await seedAdmin();
+    
+    // Check shift absences periodically (every 10 minutes)
+    setInterval(processShiftAbsences, 10 * 60 * 1000);
+    // Also run an immediate check on startup
+    await processShiftAbsences();
   });
 };
 

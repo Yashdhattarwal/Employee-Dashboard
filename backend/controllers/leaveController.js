@@ -73,13 +73,16 @@ export const updateLeaveStatus = async (req, res) => {
 
       // Sync with Attendance if Approved
       if (status === 'Approved') {
-        const start = new Date(leave.fromDate);
-        const end = new Date(leave.toDate);
+        const startStr = typeof leave.fromDate === 'string' ? leave.fromDate.split('T')[0] : new Date(leave.fromDate).toISOString().split('T')[0];
+        const endStr = typeof leave.toDate === 'string' ? leave.toDate.split('T')[0] : new Date(leave.toDate).toISOString().split('T')[0];
+
+        const start = new Date(startStr + 'T00:00:00Z');
+        const end = new Date(endStr + 'T00:00:00Z');
         
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toLocaleDateString('en-CA');
+        const current = new Date(start);
+        while (current <= end) {
+          const dateStr = current.toISOString().split('T')[0];
           
-          // Use findOne and update/create to ensure sync
           const existing = await Attendance.findOne({ where: { userId: leave.userId, date: dateStr } });
           if (existing) {
             existing.status = 'On Leave';
@@ -93,6 +96,7 @@ export const updateLeaveStatus = async (req, res) => {
               remarks: `Approved ${leave.type} Leave`
             });
           }
+          current.setUTCDate(current.getUTCDate() + 1);
         }
       }
 

@@ -1,11 +1,12 @@
 import { useState, useEffect, useContext } from 'react';
-import { X, Trash2, Shield, UserX, UserCheck } from 'lucide-react';
+import { X, Trash2, Shield, UserX, UserCheck, Pencil } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
 const Users = () => {
   const { user: currentUser } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
   const [error, setError] = useState('');
@@ -13,7 +14,8 @@ const Users = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', role: 'employee', managerId: '',
     salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
-    bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: ''
+    bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
+    shiftTime: '09:00 AM'
   });
 
   const fetchUsers = async () => {
@@ -30,19 +32,28 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  const handleAddUser = async (e) => {
+  const handleSaveUser = async (e) => {
     e.preventDefault();
     try {
       setError('');
-      await axios.post('/api/users', formData, { withCredentials: true });
+      if (editingUserId) {
+        // Don't enforce password update unless filled
+        const payload = { ...formData };
+        if (!payload.password) delete payload.password;
+        await axios.put(`/api/users/${editingUserId}`, payload, { withCredentials: true });
+      } else {
+        await axios.post('/api/users', formData, { withCredentials: true });
+      }
       setShowModal(false);
+      setEditingUserId(null);
       setFormData({ name: '', email: '', password: '', role: 'employee', managerId: '',
         salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
-        bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: ''
+        bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
+        shiftTime: '09:00 AM'
       });
       fetchUsers();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add user');
+      setError(err.response?.data?.message || 'Failed to save user');
     }
   };
 
@@ -53,6 +64,26 @@ const Users = () => {
     } catch (err) {
       alert('Failed to update status');
     }
+  };
+  const handleEditClick = (u) => {
+    setEditingUserId(u.id);
+    setFormData({
+      name: u.name || '',
+      email: u.email || '',
+      password: '', 
+      role: u.role || 'employee',
+      managerId: u.managerId || '',
+      salaryINR: u.salaryINR || '',
+      salaryUSD: u.salaryUSD || '',
+      salaryCurrency: u.salaryCurrency || 'INR',
+      bankName: u.bankName || '',
+      accountHolderName: u.accountHolderName || '',
+      accountNumber: u.accountNumber || '',
+      ifscCode: u.ifscCode || '',
+      branchName: u.branchName || '',
+      shiftTime: u.shiftTime || '09:00 AM'
+    });
+    setShowModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -111,6 +142,13 @@ const Users = () => {
                 <td className="table-cell text-right">
                   <div className="flex justify-end gap-2">
                     <button 
+                      onClick={() => handleEditClick(u)}
+                      className="p-2 text-slate-400 hover:text-primary transition-colors"
+                      title="Edit User"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button 
                       onClick={() => handleDelete(u.id)}
                       disabled={u.id === currentUser.id}
                       className="p-2 text-slate-400 hover:text-danger disabled:opacity-30 transition-colors"
@@ -140,11 +178,11 @@ const Users = () => {
             >
               <X size={20} />
             </button>
-            <h2 className="text-xl font-bold text-slate-800 mb-6">Add New User</h2>
+            <h2 className="text-xl font-bold text-slate-800 mb-6">{editingUserId ? 'Edit User Details' : 'Add New User'}</h2>
             
             {error && <div className="mb-4 bg-danger/10 text-danger px-4 py-2 rounded-lg text-sm">{error}</div>}
 
-            <form onSubmit={handleAddUser} className="space-y-4">
+            <form onSubmit={handleSaveUser} className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Full Name</label>
@@ -162,8 +200,8 @@ const Users = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700">Password</label>
-                <input required type="password" placeholder="Min 6 characters" className="input-field mt-1" 
+                <label className="block text-sm font-medium text-slate-700">Password {editingUserId && '(Leave blank to keep current)'}</label>
+                <input required={!editingUserId} type="password" placeholder={editingUserId ? "Optional" : "Min 6 characters"} className="input-field mt-1" 
                   value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} 
                 />
               </div>
@@ -242,6 +280,13 @@ const Users = () => {
                     <option value="admin">Admin</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Shift Start Time</label>
+                  <input type="text" placeholder="e.g. 09:00 AM" className="input-field mt-1"
+                    value={formData.shiftTime} onChange={e => setFormData({...formData, shiftTime: e.target.value})}
+                  />
+                </div>
                 
                 {formData.role === 'employee' && (
                   <div>
@@ -259,8 +304,8 @@ const Users = () => {
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
-                <button type="submit" className="btn-primary flex-1">Create User</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingUserId(null); }} className="btn-secondary flex-1">Cancel</button>
+                <button type="submit" className="btn-primary flex-1">{editingUserId ? 'Save Changes' : 'Create User'}</button>
               </div>
             </form>
           </div>

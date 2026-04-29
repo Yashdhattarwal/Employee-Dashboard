@@ -24,7 +24,7 @@ export const generatePayroll = async (req, res) => {
         where: {
           userId: user.id,
           date: { [Op.between]: [startOfMonth, endOfMonth] },
-          status: { [Op.notIn]: ['Absent', 'On Leave'] }
+          status: { [Op.not]: 'Absent' }
         }
       });
 
