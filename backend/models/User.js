@@ -41,6 +41,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     defaultValue: '09:00 AM',
   },
+  shiftEndTime: {
+    type: DataTypes.STRING,
+    defaultValue: '06:00 PM',
+  },
   activeStatus: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

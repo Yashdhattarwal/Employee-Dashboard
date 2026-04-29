@@ -15,7 +15,8 @@ const Users = () => {
     name: '', email: '', password: '', role: 'employee', managerId: '',
     salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
     bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
-    shiftTime: '09:00 AM'
+    shiftTime: '09:00 AM',
+    shiftEndTime: '06:00 PM'
   });
 
   const fetchUsers = async () => {
@@ -49,7 +50,8 @@ const Users = () => {
       setFormData({ name: '', email: '', password: '', role: 'employee', managerId: '',
         salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
         bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
-        shiftTime: '09:00 AM'
+        shiftTime: '09:00 AM',
+        shiftEndTime: '06:00 PM'
       });
       fetchUsers();
     } catch (err) {
@@ -81,7 +83,8 @@ const Users = () => {
       accountNumber: u.accountNumber || '',
       ifscCode: u.ifscCode || '',
       branchName: u.branchName || '',
-      shiftTime: u.shiftTime || '09:00 AM'
+      shiftTime: u.shiftTime || '09:00 AM',
+      shiftEndTime: u.shiftEndTime || '06:00 PM'
     });
     setShowModal(true);
   };
@@ -281,11 +284,19 @@ const Users = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Shift Start Time</label>
-                  <input type="text" placeholder="e.g. 09:00 AM" className="input-field mt-1"
-                    value={formData.shiftTime} onChange={e => setFormData({...formData, shiftTime: e.target.value})}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Shift Start Time</label>
+                    <input type="text" placeholder="e.g. 09:00 AM" className="input-field mt-1"
+                      value={formData.shiftTime} onChange={e => setFormData({...formData, shiftTime: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Shift End Time</label>
+                    <input type="text" placeholder="e.g. 06:00 PM" className="input-field mt-1"
+                      value={formData.shiftEndTime} onChange={e => setFormData({...formData, shiftEndTime: e.target.value})}
+                    />
+                  </div>
                 </div>
                 
                 {formData.role === 'employee' && (

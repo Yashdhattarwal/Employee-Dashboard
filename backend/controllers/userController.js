@@ -7,7 +7,7 @@ import Leave from '../models/Leave.js';
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, managerId, teamId, salaryINR, salaryUSD, salaryCurrency, bankName, accountHolderName, accountNumber, ifscCode, branchName } = req.body;
+    const { name, email, password, role, managerId, teamId, salaryINR, salaryUSD, salaryCurrency, bankName, accountHolderName, accountNumber, ifscCode, branchName, shiftTime, shiftEndTime } = req.body;
     const lowerEmail = email.toLowerCase();
 
     const userExists = await User.findOne({ where: { email: lowerEmail } });
@@ -46,6 +46,8 @@ export const createUser = async (req, res) => {
       accountNumber: accountNumber || null,
       ifscCode: ifscCode || null,
       branchName: branchName || null,
+      shiftTime: shiftTime || '09:00 AM',
+      shiftEndTime: shiftEndTime || '06:00 PM'
     });
 
     res.status(201).json({
@@ -106,7 +108,7 @@ export const updateUser = async (req, res) => {
       name, email, role, managerId, teamId,
       salaryINR, salaryUSD, salaryCurrency,
       bankName, accountHolderName, accountNumber, ifscCode, branchName,
-      password
+      password, shiftTime, shiftEndTime
     } = req.body;
 
     if (email && email.toLowerCase() !== user.email) {
@@ -129,6 +131,8 @@ export const updateUser = async (req, res) => {
     if (accountNumber !== undefined) user.accountNumber = accountNumber || null;
     if (ifscCode !== undefined) user.ifscCode = ifscCode || null;
     if (branchName !== undefined) user.branchName = branchName || null;
+    if (shiftTime) user.shiftTime = shiftTime;
+    if (shiftEndTime) user.shiftEndTime = shiftEndTime;
 
     if (password) {
       const salt = await bcrypt.genSalt(10);
