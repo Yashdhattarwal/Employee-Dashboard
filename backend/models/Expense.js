@@ -23,6 +23,14 @@ const Expense = sequelize.define('Expense', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  invoiceData: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true,
+  },
+  invoiceMimeType: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   status: {
     type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
     defaultValue: 'Pending',

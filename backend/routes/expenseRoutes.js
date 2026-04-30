@@ -1,5 +1,5 @@
 import express from 'express';
-import { uploadExpense, getMyExpenses, getAllExpenses, approveExpense, rejectExpense } from '../controllers/expenseController.js';
+import { uploadExpense, getMyExpenses, getAllExpenses, approveExpense, rejectExpense, getInvoiceFile } from '../controllers/expenseController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import multer from 'multer';
 import path from 'path';
@@ -32,5 +32,6 @@ router.get('/my', protect, getMyExpenses);
 router.get('/', protect, admin, getAllExpenses);
 router.put('/:id/approve', protect, admin, approveExpense);
 router.put('/:id/reject', protect, admin, rejectExpense);
+router.get('/file/:id', protect, getInvoiceFile);
 
 export default router;
