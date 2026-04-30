@@ -1,6 +1,7 @@
 import Payroll from '../models/Payroll.js';
 import User from '../models/User.js';
 import Attendance from '../models/Attendance.js';
+import Expense from '../models/Expense.js';
 import { Op } from 'sequelize';
 
 export const generatePayroll = async (req, res) => {
@@ -38,6 +39,16 @@ export const generatePayroll = async (req, res) => {
       const oneDaySalary = totalSalary / 26;
       const basePayableSalary = oneDaySalary * attendanceCount;
 
+      // Calculate approved expenses
+      const expenses = await Expense.findAll({
+        where: {
+          userId: user.id,
+          month,
+          status: 'Approved'
+        }
+      });
+      const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
       let payroll = await Payroll.findOne({ where: { userId: user.id, month } });
 
       if (payroll && payroll.status === 'Locked') {
@@ -49,7 +60,7 @@ export const generatePayroll = async (req, res) => {
       if (payroll) {
         payroll.presentDays = attendanceCount;
         payroll.baseSalary = basePayableSalary;
-        payroll.netSalary = basePayableSalary + (payroll.bonus || 0) + (payroll.overtime || 0) - (payroll.deductions || 0);
+        payroll.netSalary = basePayableSalary + (payroll.bonus || 0) + (payroll.overtime || 0) + totalExpenses - (payroll.deductions || 0);
         payroll.exchangeRate = rate;
         await payroll.save();
       } else {
@@ -61,7 +72,7 @@ export const generatePayroll = async (req, res) => {
           bonus: 0,
           overtime: 0,
           deductions: 0,
-          netSalary: basePayableSalary,
+          netSalary: basePayableSalary + totalExpenses,
           currency: chosenCurrency,
           exchangeRate: rate,
           status: 'Draft'

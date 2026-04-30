@@ -13,6 +13,7 @@ import leaveRoutes from './routes/leaveRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
 import { processShiftAbsences } from './services/shiftService.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
@@ -20,6 +21,7 @@ import Leave from './models/Leave.js';
 import { Ticket, Comment } from './models/Ticket.js';
 import Notification from './models/Notification.js';
 import Acknowledgement from './models/Acknowledgement.js';
+import Expense from './models/Expense.js';
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
@@ -52,6 +54,10 @@ app.use('/api/leaves', leaveRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payroll', payrollRoutes);
+app.use('/api/expenses', expenseRoutes);
+
+// Static uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve Frontend
 const distPath = path.join(__dirname, '../frontend/dist');
@@ -84,6 +90,8 @@ const seedAdmin = async () => {
     console.error('Failed to seed admin:', error.message);
   }
 };
+
+Expense.belongsTo(User, { foreignKey: 'userId' });
 
 const startServer = async () => {
   await connectDB();
