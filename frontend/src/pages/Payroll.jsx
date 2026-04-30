@@ -13,6 +13,7 @@ const Payroll = () => {
   const [expenses, setExpenses] = useState([]);
   const [exchangeRate, setExchangeRate] = useState(83.0);
   const [loading, setLoading] = useState(false);
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState('');
 
   // Edit Payroll Modal State
   const [editModal, setEditModal] = useState(false);
@@ -143,6 +144,46 @@ const Payroll = () => {
     document.body.removeChild(link);
   };
 
+  const exportExpensesCSV = () => {
+    const filtered = isAdmin && selectedEmployeeFilter 
+      ? expenses.filter(exp => exp.userId === parseInt(selectedEmployeeFilter))
+      : expenses;
+
+    if (!filtered.length) return;
+    const headers = ['Date', 'Employee', 'Description', 'Amount', 'Status', 'Rejection Reason'];
+    const rows = filtered.map(exp => [
+      new Date(exp.createdAt).toLocaleDateString(),
+      exp.User?.name || 'N/A',
+      exp.description,
+      exp.amount.toFixed(2),
+      exp.status,
+      exp.rejectionReason || ''
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Expenses_${month}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredExpenses = isAdmin && selectedEmployeeFilter 
+    ? expenses.filter(exp => exp.userId === parseInt(selectedEmployeeFilter))
+    : expenses;
+
+  // Get unique employees who have payroll records to populate the filter
+  const uniqueEmployees = payrolls.reduce((acc, curr) => {
+    if (curr.user && !acc.find(emp => emp.id === curr.user.id)) {
+      acc.push({ id: curr.user.id, name: curr.user.name });
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -180,6 +221,15 @@ const Payroll = () => {
             >
               <FileSpreadsheet size={18} />
               Export CSV
+            </button>
+          )}
+          {isAdmin && activeTab === 'expenses' && (
+            <button 
+              onClick={exportExpensesCSV} 
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition"
+            >
+              <FileSpreadsheet size={18} />
+              Export Expenses CSV
             </button>
           )}
           {!isAdmin && activeTab === 'expenses' && (
@@ -299,85 +349,103 @@ const Payroll = () => {
           </div>
         </>
       ) : (
-        <div className="glass-panel overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs">
-                <tr>
-                  <th className="px-6 py-4">Date</th>
-                  {isAdmin && <th className="px-6 py-4">Employee</th>}
-                  <th className="px-6 py-4">Description</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4">Invoice</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Actions/Reason</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                {expenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">{new Date(exp.createdAt).toLocaleDateString()}</td>
-                    {isAdmin && <td className="px-6 py-4">{exp.User?.name}</td>}
-                    <td className="px-6 py-4">{exp.description}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">₹{exp.amount.toFixed(2)}</td>
-                    <td className="px-6 py-4">
-                      {exp.invoiceUrl ? (
-                        <a 
-                          href={exp.invoiceUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-primary hover:underline"
-                        >
-                          <Eye size={14} /> View
-                        </a>
-                      ) : 'No Invoice'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        exp.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                        exp.status === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {exp.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {isAdmin && exp.status === 'Pending' ? (
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => handleApproveExpense(exp.id)}
-                            className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200 transition"
-                            title="Approve"
-                          >
-                            <Check size={16} />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setSelectedExpenseId(exp.id);
-                              setRejectionModal(true);
-                            }}
-                            className="p-1.5 bg-rose-100 text-rose-600 rounded hover:bg-rose-200 transition"
-                            title="Reject"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-500 italic">
-                          {exp.status === 'Rejected' ? `Reason: ${exp.rejectionReason}` : '-'}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+        <div className="space-y-4">
+          {isAdmin && (
+            <div className="flex items-center gap-3 glass-panel p-4">
+              <label className="text-sm font-semibold text-slate-600">Filter by Employee:</label>
+              <select 
+                className="input-field max-w-xs"
+                value={selectedEmployeeFilter}
+                onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
+              >
+                <option value="">All Employees</option>
+                {uniqueEmployees.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
                 ))}
-                {expenses.length === 0 && (
+              </select>
+            </div>
+          )}
+
+          <div className="glass-panel overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs">
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 6} className="px-6 py-10 text-center text-slate-400">
-                      No expense claims found for this period.
-                    </td>
+                    <th className="px-6 py-4">Date</th>
+                    {isAdmin && <th className="px-6 py-4">Employee</th>}
+                    <th className="px-6 py-4">Description</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Invoice</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Actions/Reason</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                  {filteredExpenses.map((exp) => (
+                    <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">{new Date(exp.createdAt).toLocaleDateString()}</td>
+                      {isAdmin && <td className="px-6 py-4">{exp.User?.name}</td>}
+                      <td className="px-6 py-4">{exp.description}</td>
+                      <td className="px-6 py-4 font-bold text-slate-900">₹{exp.amount.toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        {exp.invoiceUrl ? (
+                          <a 
+                            href={exp.invoiceUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <Eye size={14} /> View
+                          </a>
+                        ) : 'No Invoice'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          exp.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
+                          exp.status === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {exp.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {isAdmin && exp.status === 'Pending' ? (
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => handleApproveExpense(exp.id)}
+                              className="p-1.5 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200 transition"
+                              title="Approve"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setSelectedExpenseId(exp.id);
+                                setRejectionModal(true);
+                              }}
+                              className="p-1.5 bg-rose-100 text-rose-600 rounded hover:bg-rose-200 transition"
+                              title="Reject"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500 italic">
+                            {exp.status === 'Rejected' ? `Reason: ${exp.rejectionReason}` : '-'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredExpenses.length === 0 && (
+                    <tr>
+                      <td colSpan={isAdmin ? 7 : 6} className="px-6 py-10 text-center text-slate-400">
+                        No expense claims found for this period.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
