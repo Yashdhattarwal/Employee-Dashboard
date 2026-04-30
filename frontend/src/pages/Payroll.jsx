@@ -146,7 +146,7 @@ const Payroll = () => {
 
   const exportExpensesCSV = () => {
     const filtered = isAdmin && selectedEmployeeFilter 
-      ? expenses.filter(exp => exp.userId === parseInt(selectedEmployeeFilter))
+      ? expenses.filter(exp => String(exp.userId) === String(selectedEmployeeFilter))
       : expenses;
 
     if (!filtered.length) return;
@@ -173,13 +173,13 @@ const Payroll = () => {
   };
 
   const filteredExpenses = isAdmin && selectedEmployeeFilter 
-    ? expenses.filter(exp => exp.userId === parseInt(selectedEmployeeFilter))
+    ? expenses.filter(exp => String(exp.userId) === String(selectedEmployeeFilter))
     : expenses;
 
-  // Get unique employees who have payroll records to populate the filter
-  const uniqueEmployees = payrolls.reduce((acc, curr) => {
-    if (curr.user && !acc.find(emp => emp.id === curr.user.id)) {
-      acc.push({ id: curr.user.id, name: curr.user.name });
+  // Get unique employees from the expenses list itself to ensure all submitters are present
+  const uniqueEmployees = expenses.reduce((acc, curr) => {
+    if (curr.User && !acc.find(emp => emp.id === curr.userId)) {
+      acc.push({ id: curr.userId, name: curr.User.name });
     }
     return acc;
   }, []);
