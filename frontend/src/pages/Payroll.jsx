@@ -323,7 +323,7 @@ const Payroll = () => {
                     <td className="px-6 py-4">
                       {exp.invoiceUrl ? (
                         <a 
-                          href={isAdmin ? `${window.location.origin.replace('5173', '5000')}${exp.invoiceUrl}` : `${window.location.origin.replace('5173', '5000')}${exp.invoiceUrl}`} 
+                          href={exp.invoiceUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-primary hover:underline"

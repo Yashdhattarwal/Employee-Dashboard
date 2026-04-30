@@ -57,7 +57,7 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/expenses', expenseRoutes);
 
 // Static uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.resolve('uploads')));
 
 // Serve Frontend
 const distPath = path.join(__dirname, '../frontend/dist');
