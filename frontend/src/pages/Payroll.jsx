@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { DollarSign, FileSpreadsheet, Lock, Unlock, Eye, Upload, Check, X, ReceiptText, Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const Payroll = () => {
   const { user } = useContext(AuthContext);
@@ -178,19 +178,25 @@ const Payroll = () => {
     try {
       const doc = new jsPDF();
       
+      // Company Header
       doc.setFontSize(22);
       doc.setTextColor(41, 128, 185);
-      doc.text("Salary Slip", 105, 20, { align: "center" });
+      doc.text("RTN Innovations Pvt Ltd (India)", 105, 20, { align: "center" });
       
-      doc.setFontSize(12);
+      // Document Title
+      doc.setFontSize(16);
       doc.setTextColor(50, 50, 50);
-      doc.text(`Employee Name: ${p.user?.name || 'N/A'}`, 14, 40);
-      doc.text(`Month: ${p.month}`, 14, 48);
-      doc.text(`Present Days: ${p.presentDays}`, 14, 56);
+      doc.text("Salary Slip", 105, 30, { align: "center" });
+      
+      // Employee Details
+      doc.setFontSize(12);
+      doc.text(`Employee Name: ${p.user?.name || 'N/A'}`, 14, 45);
+      doc.text(`Month: ${p.month}`, 14, 53);
+      doc.text(`Present Days: ${p.presentDays}`, 14, 61);
       
       const currencySymbol = p.currency === 'USD' ? '$' : 'Rs.';
       
-      doc.autoTable({
+      autoTable(doc, {
         startY: 70,
         head: [['Description', 'Amount']],
         body: [
