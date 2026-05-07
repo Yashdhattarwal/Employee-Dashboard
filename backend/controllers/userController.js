@@ -111,10 +111,15 @@ export const updateUser = async (req, res) => {
       password, shiftTime, shiftEndTime
     } = req.body;
 
-    if (email && email.toLowerCase() !== user.email) {
-      const emailExists = await User.findOne({ where: { email: email.toLowerCase() } });
-      if (emailExists) return res.status(400).json({ message: 'Email already registered' });
-      user.email = email.toLowerCase();
+    if (email) {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (trimmedEmail !== (user.email || '').toLowerCase()) {
+        const emailExists = await User.findOne({ where: { email: trimmedEmail } });
+        if (emailExists && emailExists.id !== user.id) {
+          return res.status(400).json({ message: 'Email already registered' });
+        }
+        user.email = trimmedEmail;
+      }
     }
 
     if (name) user.name = name;
