@@ -16,9 +16,10 @@ export const generatePayroll = async (req, res) => {
 
     for (const user of users) {
       // Calculate present days
-      // Date format in DB is YYYY-MM-DD
+      const [year, mth] = month.split('-');
+      const lastDay = new Date(parseInt(year), parseInt(mth), 0).getDate();
       const startOfMonth = `${month}-01`;
-      const endOfMonth = `${month}-31`; // Rough approximation, Op.between works
+      const endOfMonth = `${month}-${lastDay.toString().padStart(2, '0')}`;
 
       const attendanceCount = await Attendance.count({
         where: {
