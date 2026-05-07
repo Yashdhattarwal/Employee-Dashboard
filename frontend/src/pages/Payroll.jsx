@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { DollarSign, FileSpreadsheet, Lock, Unlock, Eye, Upload, Check, X, ReceiptText, Download } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 const Payroll = () => {
@@ -175,39 +175,44 @@ const Payroll = () => {
   };
 
   const generateSalarySlip = (p) => {
-    const doc = new jsPDF();
-    
-    doc.setFontSize(22);
-    doc.setTextColor(41, 128, 185);
-    doc.text("Salary Slip", 105, 20, { align: "center" });
-    
-    doc.setFontSize(12);
-    doc.setTextColor(50, 50, 50);
-    doc.text(`Employee Name: ${p.user?.name || 'N/A'}`, 14, 40);
-    doc.text(`Month: ${p.month}`, 14, 48);
-    doc.text(`Present Days: ${p.presentDays}`, 14, 56);
-    
-    const currencySymbol = p.currency === 'USD' ? '$' : 'Rs.';
-    
-    doc.autoTable({
-      startY: 70,
-      head: [['Description', 'Amount']],
-      body: [
-        ['Base Salary', `${currencySymbol} ${p.baseSalary?.toFixed(2)}`],
-        ['Bonus', `+ ${currencySymbol} ${(p.bonus || 0).toFixed(2)}`],
-        ['Overtime', `+ ${currencySymbol} ${(p.overtime || 0).toFixed(2)}`],
-        ['Deductions', `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
-      ],
-      foot: [
-        ['Net Salary', `${currencySymbol} ${p.netSalary?.toFixed(2)}`]
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-      footStyles: { fillColor: [41, 128, 185], textColor: 255 },
-      styles: { fontSize: 11, cellPadding: 5 }
-    });
-    
-    doc.save(`Salary_Slip_${p.user?.name || 'Employee'}_${p.month}.pdf`);
+    try {
+      const doc = new jsPDF();
+      
+      doc.setFontSize(22);
+      doc.setTextColor(41, 128, 185);
+      doc.text("Salary Slip", 105, 20, { align: "center" });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      doc.text(`Employee Name: ${p.user?.name || 'N/A'}`, 14, 40);
+      doc.text(`Month: ${p.month}`, 14, 48);
+      doc.text(`Present Days: ${p.presentDays}`, 14, 56);
+      
+      const currencySymbol = p.currency === 'USD' ? '$' : 'Rs.';
+      
+      doc.autoTable({
+        startY: 70,
+        head: [['Description', 'Amount']],
+        body: [
+          ['Base Salary', `${currencySymbol} ${p.baseSalary?.toFixed(2)}`],
+          ['Bonus', `+ ${currencySymbol} ${(p.bonus || 0).toFixed(2)}`],
+          ['Overtime', `+ ${currencySymbol} ${(p.overtime || 0).toFixed(2)}`],
+          ['Deductions', `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
+        ],
+        foot: [
+          ['Net Salary', `${currencySymbol} ${p.netSalary?.toFixed(2)}`]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        footStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        styles: { fontSize: 11, cellPadding: 5 }
+      });
+      
+      doc.save(`Salary_Slip_${p.user?.name || 'Employee'}_${p.month}.pdf`);
+    } catch (error) {
+      console.error(error);
+      alert('Error generating PDF: ' + error.message);
+    }
   };
 
   const canDownloadSlip = (p) => {
