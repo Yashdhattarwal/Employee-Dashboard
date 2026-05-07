@@ -1,7 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { DollarSign, FileSpreadsheet, Lock, Unlock, Eye, Upload, Check, X, ReceiptText } from 'lucide-react';
+import { DollarSign, FileSpreadsheet, Lock, Unlock, Eye, Upload, Check, X, ReceiptText, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Payroll = () => {
   const { user } = useContext(AuthContext);
@@ -172,6 +174,61 @@ const Payroll = () => {
     document.body.removeChild(link);
   };
 
+  const generateSalarySlip = (p) => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(22);
+    doc.setTextColor(41, 128, 185);
+    doc.text("Salary Slip", 105, 20, { align: "center" });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(50, 50, 50);
+    doc.text(`Employee Name: ${p.user?.name || 'N/A'}`, 14, 40);
+    doc.text(`Month: ${p.month}`, 14, 48);
+    doc.text(`Present Days: ${p.presentDays}`, 14, 56);
+    
+    const currencySymbol = p.currency === 'USD' ? '$' : 'Rs.';
+    
+    doc.autoTable({
+      startY: 70,
+      head: [['Description', 'Amount']],
+      body: [
+        ['Base Salary', `${currencySymbol} ${p.baseSalary?.toFixed(2)}`],
+        ['Bonus', `+ ${currencySymbol} ${(p.bonus || 0).toFixed(2)}`],
+        ['Overtime', `+ ${currencySymbol} ${(p.overtime || 0).toFixed(2)}`],
+        ['Deductions', `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
+      ],
+      foot: [
+        ['Net Salary', `${currencySymbol} ${p.netSalary?.toFixed(2)}`]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+      footStyles: { fillColor: [41, 128, 185], textColor: 255 },
+      styles: { fontSize: 11, cellPadding: 5 }
+    });
+    
+    doc.save(`Salary_Slip_${p.user?.name || 'Employee'}_${p.month}.pdf`);
+  };
+
+  const canDownloadSlip = (p) => {
+    if (p.status !== 'Locked') return false;
+    
+    const today = new Date();
+    const [payYearStr, payMonthStr] = p.month.split('-');
+    const payMonth = parseInt(payMonthStr, 10);
+    const payYear = parseInt(payYearStr, 10);
+    
+    let availMonth = payMonth + 1;
+    let availYear = payYear;
+    if (availMonth > 12) {
+      availMonth = 1;
+      availYear += 1;
+    }
+    
+    const availDate = new Date(availYear, availMonth - 1, 6); // 6th day (i.e. after 5th)
+    return today >= availDate;
+  };
+
   const filteredExpenses = isAdmin && selectedEmployeeFilter 
     ? expenses.filter(exp => String(exp.userId) === String(selectedEmployeeFilter))
     : expenses;
@@ -317,7 +374,7 @@ const Payroll = () => {
                           {p.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 flex flex-col gap-2">
                         {isAdmin ? (
                           <button 
                             disabled={p.status === 'Locked'}
@@ -326,12 +383,20 @@ const Payroll = () => {
                               setEditForm({ bonus: p.bonus, overtime: p.overtime, deductions: p.deductions, status: p.status });
                               setEditModal(true);
                             }}
-                            className="text-primary hover:underline font-semibold disabled:opacity-50"
+                            className="text-primary hover:underline font-semibold disabled:opacity-50 text-left"
                           >
                             Adjust
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400">View Only</span>
+                          p.status !== 'Locked' && <span className="text-xs text-slate-400">View Only</span>
+                        )}
+                        {canDownloadSlip(p) && (
+                          <button 
+                            onClick={() => generateSalarySlip(p)}
+                            className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline font-semibold text-sm"
+                          >
+                            <Download size={14} /> Download Slip
+                          </button>
                         )}
                       </td>
                     </tr>
