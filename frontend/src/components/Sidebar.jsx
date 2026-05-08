@@ -9,7 +9,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
 
   const getNavItems = () => {
-    const base = location.pathname.split('/')[1];
+    let base = 'employee';
+    if (user?.role === 'admin') base = 'admin';
+    else if (user?.role === 'manager') base = 'manager';
+
     const items = [
       { name: 'Dashboard', path: `/${base}`, icon: LayoutDashboard },
       { name: 'My Attendance', path: `/${base}/attendance`, icon: Calendar },
