@@ -180,7 +180,7 @@ const Payroll = () => {
       
       // Company Header
       doc.setFontSize(22);
-      doc.setTextColor(41, 128, 185);
+      doc.setTextColor(33, 33, 33);
       doc.text("RTN Innovations Pvt Ltd (India)", 105, 20, { align: "center" });
       
       // Document Title
@@ -198,6 +198,10 @@ const Payroll = () => {
       
       const currencySymbol = p.currency === 'USD' ? '$' : 'Rs.';
       
+      const absentDesc = p.absentDates && p.absentDates.length > 0 
+        ? `\nDeduction for Absent Dates:\n(${p.absentDates.join(', ')})`
+        : '';
+
       autoTable(doc, {
         startY: 70,
         head: [['Description', 'Amount']],
@@ -205,14 +209,14 @@ const Payroll = () => {
           ['Base Salary', `${currencySymbol} ${p.baseSalary?.toFixed(2)}`],
           ['Bonus', `+ ${currencySymbol} ${(p.bonus || 0).toFixed(2)}`],
           ['Overtime', `+ ${currencySymbol} ${(p.overtime || 0).toFixed(2)}`],
-          ['Deductions', `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
+          [`Deductions ${absentDesc}`, `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
         ],
         foot: [
           ['Net Salary', `${currencySymbol} ${p.netSalary?.toFixed(2)}`]
         ],
         theme: 'grid',
-        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-        footStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        headStyles: { fillColor: [50, 50, 50], textColor: 255 },
+        footStyles: { fillColor: [50, 50, 50], textColor: 255 },
         styles: { fontSize: 11, cellPadding: 5 }
       });
       

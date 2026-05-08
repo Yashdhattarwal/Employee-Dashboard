@@ -86,11 +86,33 @@ export const getPayrolls = async (req, res) => {
     const { month } = req.query;
     const where = month ? { month } : {};
 
-    const payrolls = await Payroll.findAll({
+    let payrolls = await Payroll.findAll({
       where,
       include: [{ model: User, as: 'user', attributes: ['name', 'email', 'employeeId', 'salaryCurrency', 'salaryINR', 'salaryUSD', 'bankName', 'accountHolderName', 'accountNumber', 'ifscCode', 'branchName'] }],
       order: [['month', 'DESC']]
     });
+
+    payrolls = await Promise.all(payrolls.map(async (p) => {
+      const pJson = p.toJSON();
+      const [year, mth] = p.month.split('-');
+      const lastDay = new Date(parseInt(year), parseInt(mth), 0).getDate();
+      const startOfMonth = `${p.month}-01`;
+      const endOfMonth = `${p.month}-${lastDay.toString().padStart(2, '0')}`;
+      
+      const absentRecords = await Attendance.findAll({
+        where: {
+          userId: p.userId,
+          date: { [Op.between]: [startOfMonth, endOfMonth] },
+          status: 'Absent'
+        },
+        attributes: ['date'],
+        order: [['date', 'ASC']]
+      });
+      
+      pJson.absentDates = absentRecords.map(r => r.date);
+      return pJson;
+    }));
+
     res.json(payrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -121,11 +143,33 @@ export const updatePayroll = async (req, res) => {
 
 export const getMyPayrolls = async (req, res) => {
   try {
-    const payrolls = await Payroll.findAll({
+    let payrolls = await Payroll.findAll({
       where: { userId: req.user.id },
       include: [{ model: User, as: 'user', attributes: ['name', 'email', 'employeeId', 'salaryCurrency', 'salaryINR', 'salaryUSD', 'bankName', 'accountHolderName', 'accountNumber', 'ifscCode', 'branchName'] }],
       order: [['month', 'DESC']]
     });
+
+    payrolls = await Promise.all(payrolls.map(async (p) => {
+      const pJson = p.toJSON();
+      const [year, mth] = p.month.split('-');
+      const lastDay = new Date(parseInt(year), parseInt(mth), 0).getDate();
+      const startOfMonth = `${p.month}-01`;
+      const endOfMonth = `${p.month}-${lastDay.toString().padStart(2, '0')}`;
+      
+      const absentRecords = await Attendance.findAll({
+        where: {
+          userId: p.userId,
+          date: { [Op.between]: [startOfMonth, endOfMonth] },
+          status: 'Absent'
+        },
+        attributes: ['date'],
+        order: [['date', 'ASC']]
+      });
+      
+      pJson.absentDates = absentRecords.map(r => r.date);
+      return pJson;
+    }));
+
     res.json(payrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });
