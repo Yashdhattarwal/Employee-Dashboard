@@ -142,14 +142,23 @@ export const selfAttendanceAction = async (req, res) => {
     let attendance = await Attendance.findOne({ where: { userId, date } });
 
     if (type === 'clock-in') {
-      if (attendance) return res.status(400).json({ message: 'Already clocked in today' });
-      attendance = await Attendance.create({
-        userId,
-        date,
-        status: 'Present',
-        checkIn: time,
-        markedBy: userId
-      });
+      if (attendance && attendance.checkIn) return res.status(400).json({ message: 'Already clocked in today' });
+      
+      if (attendance) {
+        // If record exists (e.g. marked as Weekoff/Absent by admin), allow user to clock in
+        attendance.status = 'Present';
+        attendance.checkIn = time;
+        attendance.markedBy = userId;
+        await attendance.save();
+      } else {
+        attendance = await Attendance.create({
+          userId,
+          date,
+          status: 'Present',
+          checkIn: time,
+          markedBy: userId
+        });
+      }
     } else if (!attendance) {
       return res.status(400).json({ message: 'Must clock in first' });
     } else if (type === 'clock-out') {
@@ -174,7 +183,7 @@ export const selfAttendanceAction = async (req, res) => {
 
 export const getAttendanceStatus = async (req, res) => {
   try {
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toLocaleDateString('en-CA');
     const attendance = await Attendance.findOne({ where: { userId: req.user.id, date } });
     res.json(attendance || { status: 'Not Clocked In' });
   } catch (error) {
