@@ -25,7 +25,7 @@ export const generatePayroll = async (req, res) => {
         where: {
           userId: user.id,
           date: { [Op.between]: [startOfMonth, endOfMonth] },
-          status: { [Op.not]: 'Absent' }
+          status: { [Op.notIn]: ['Absent', 'Weekoff'] }
         }
       });
 
@@ -37,7 +37,8 @@ export const generatePayroll = async (req, res) => {
       const totalSalary = chosenCurrency === 'USD' ? baseSalaryUSD : baseSalaryINR;
 
       const oneDaySalary = totalSalary / 26;
-      const basePayableSalary = oneDaySalary * attendanceCount;
+      const absentDays = Math.max(0, 26 - attendanceCount);
+      const absenceDeduction = absentDays * oneDaySalary;
 
       let payroll = await Payroll.findOne({ where: { userId: user.id, month } });
 
@@ -49,8 +50,10 @@ export const generatePayroll = async (req, res) => {
 
       if (payroll) {
         payroll.presentDays = attendanceCount;
-        payroll.baseSalary = basePayableSalary;
-        payroll.netSalary = basePayableSalary + (payroll.bonus || 0) + (payroll.overtime || 0) - (payroll.deductions || 0);
+        payroll.baseSalary = totalSalary;
+        // Overwrite deductions with absence calculation for now, admin can adjust later
+        payroll.deductions = absenceDeduction;
+        payroll.netSalary = totalSalary + (payroll.bonus || 0) + (payroll.overtime || 0) - payroll.deductions;
         payroll.exchangeRate = rate;
         await payroll.save();
       } else {
@@ -58,11 +61,11 @@ export const generatePayroll = async (req, res) => {
           userId: user.id,
           month,
           presentDays: attendanceCount,
-          baseSalary: basePayableSalary,
+          baseSalary: totalSalary,
           bonus: 0,
           overtime: 0,
-          deductions: 0,
-          netSalary: basePayableSalary,
+          deductions: absenceDeduction,
+          netSalary: totalSalary - absenceDeduction,
           currency: chosenCurrency,
           exchangeRate: rate,
           status: 'Draft'
@@ -120,6 +123,7 @@ export const getMyPayrolls = async (req, res) => {
   try {
     const payrolls = await Payroll.findAll({
       where: { userId: req.user.id },
+      include: [{ model: User, as: 'user', attributes: ['name', 'email', 'employeeId', 'salaryCurrency', 'salaryINR', 'salaryUSD', 'bankName', 'accountHolderName', 'accountNumber', 'ifscCode', 'branchName'] }],
       order: [['month', 'DESC']]
     });
     res.json(payrolls);

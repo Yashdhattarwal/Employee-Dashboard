@@ -241,9 +241,10 @@ const TeamManagement = () => {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                         r.status === 'On Leave' ? 'bg-amber-500/10 text-amber-600' :
                         r.status === 'Absent' ? 'bg-danger/10 text-danger' :
+                        r.status === 'Weekoff' ? 'bg-indigo-100 text-indigo-600' :
                         'bg-success/10 text-success'
                       }`}>
-                        {r.status === 'On Leave' ? 'On Leave' : r.status === 'Absent' ? 'Absent' : 'Present'}
+                        {r.status === 'On Leave' ? 'On Leave' : r.status === 'Absent' ? 'Absent' : r.status === 'Weekoff' ? 'Weekoff' : 'Present'}
                       </span>
                     </td>
                     <td className="table-cell">
@@ -377,6 +378,7 @@ const TeamManagement = () => {
                       <option value="Present">Present</option>
                       <option value="On Leave">On Leave</option>
                       <option value="Absent">Absent</option>
+                      <option value="Weekoff">Weekoff</option>
                     </select>
                   </div>
                 </>

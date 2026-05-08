@@ -69,6 +69,39 @@ export const markAttendance = async (req, res) => {
       where: { userId, date: startOfDay }
     });
 
+    if (status === 'Weekoff') {
+      const [y, m, dayPart] = startOfDay.split('-');
+      const d = new Date(y, m - 1, dayPart);
+      const dayOfWeek = d.getDay();
+      
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - dayOfWeek);
+      const weekEnd = new Date(d);
+      weekEnd.setDate(d.getDate() + (6 - dayOfWeek));
+
+      const formatYMD = (dateObj) => {
+        const yy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${yy}-${mm}-${dd}`;
+      };
+
+      const startStr = formatYMD(weekStart);
+      const endStr = formatYMD(weekEnd);
+
+      const existingWeekoff = await Attendance.findOne({
+        where: {
+          userId,
+          status: 'Weekoff',
+          date: { [Op.between]: [startStr, endStr] }
+        }
+      });
+
+      if (existingWeekoff && (!attendance || existingWeekoff.id !== attendance.id)) {
+        return res.status(400).json({ message: `A weekoff is already marked for this week (${existingWeekoff.date}).` });
+      }
+    }
+
     if (attendance) {
       console.log('Updating existing record:', attendance.id);
       attendance.status = status;

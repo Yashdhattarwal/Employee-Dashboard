@@ -190,7 +190,9 @@ const Payroll = () => {
       
       // Employee Details
       doc.setFontSize(12);
-      doc.text(`Employee Name: ${p.user?.name || 'N/A'}`, 14, 45);
+      const empName = p.user?.name || 'N/A';
+      const empId = p.user?.employeeId || 'N/A';
+      doc.text(`Employee: ${empName} (ID: ${empId})`, 14, 45);
       doc.text(`Month: ${p.month}`, 14, 53);
       doc.text(`Present Days: ${p.presentDays}`, 14, 61);
       
