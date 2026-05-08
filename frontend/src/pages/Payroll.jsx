@@ -228,22 +228,7 @@ const Payroll = () => {
   };
 
   const canDownloadSlip = (p) => {
-    if (p.status !== 'Locked') return false;
-    
-    const today = new Date();
-    const [payYearStr, payMonthStr] = p.month.split('-');
-    const payMonth = parseInt(payMonthStr, 10);
-    const payYear = parseInt(payYearStr, 10);
-    
-    let availMonth = payMonth + 1;
-    let availYear = payYear;
-    if (availMonth > 12) {
-      availMonth = 1;
-      availYear += 1;
-    }
-    
-    const availDate = new Date(availYear, availMonth - 1, 6); // 6th day (i.e. after 5th)
-    return today >= availDate;
+    return p.status === 'Locked';
   };
 
   const filteredExpenses = isAdmin && selectedEmployeeFilter 
