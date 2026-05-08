@@ -42,12 +42,7 @@ export const generatePayroll = async (req, res) => {
 
       let payroll = await Payroll.findOne({ where: { userId: user.id, month } });
 
-      if (payroll && payroll.status === 'Locked') {
-        // Skip updating locked payrolls
-        payrolls.push(payroll);
-        continue;
-      }
-
+      // Update even locked payrolls if requested by clicking generate
       if (payroll) {
         payroll.presentDays = attendanceCount;
         payroll.baseSalary = totalSalary;
