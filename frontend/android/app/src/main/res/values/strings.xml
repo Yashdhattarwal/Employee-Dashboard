@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RTN Employee</string>
+    <string name="title_activity_main">RTN Employee</string>
+    <string name="package_name">com.rtn.employee.dashboard</string>
+    <string name="custom_url_scheme">com.rtn.employee.dashboard</string>
+</resources>

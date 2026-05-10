@@ -1,0 +1,8 @@
+{
+  "appId": "com.rtn.employee.dashboard",
+  "appName": "RTN Employee",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
