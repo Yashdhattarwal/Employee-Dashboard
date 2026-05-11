@@ -4,6 +4,8 @@ import { Op } from 'sequelize';
 import Attendance from '../models/Attendance.js';
 import { Ticket } from '../models/Ticket.js';
 import Leave from '../models/Leave.js';
+import Expense from '../models/Expense.js';
+import Payroll from '../models/Payroll.js';
 
 export const createUser = async (req, res) => {
   try {
@@ -215,6 +217,46 @@ export const getDashboardStats = async (req, res) => {
       pendingTickets,
       attendanceTrend,
       recentLeaves: recentLeaves.map(l => ({ ...l.toJSON(), _id: l.id }))
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getFinancialStats = async (req, res) => {
+  try {
+    const { month } = req.query;
+    if (!month) return res.status(400).json({ message: 'Month is required' });
+
+    // Calculate Total Salary (Locked/Approved payrolls)
+    const payrolls = await Payroll.findAll({
+      where: { 
+        month,
+        status: { [Op.in]: ['Approved', 'Locked'] }
+      }
+    });
+    
+    // Normalize to INR for comparison
+    const totalSalary = payrolls.reduce((acc, p) => {
+      const amount = p.netSalary || 0;
+      const rate = p.exchangeRate || 1;
+      return acc + (amount * rate);
+    }, 0);
+
+    // Calculate Total Expenses (Approved only)
+    const expenses = await Expense.findAll({
+      where: { 
+        month,
+        status: 'Approved'
+      }
+    });
+    const totalExpenses = expenses.reduce((acc, e) => acc + (e.amount || 0), 0);
+
+    res.json({
+      month,
+      totalSalary: Math.round(totalSalary * 100) / 100,
+      totalExpenses: Math.round(totalExpenses * 100) / 100,
+      currency: 'INR'
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

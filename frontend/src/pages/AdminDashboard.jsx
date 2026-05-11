@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, UserCheck, Calendar, Ticket, Check, X, Clock } from 'lucide-react';
 import axios from 'axios';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Download } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useContext } from 'react';
@@ -16,6 +16,13 @@ const AdminDashboard = () => {
     attendanceTrend: [],
     recentLeaves: []
   });
+  
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [financialStats, setFinancialStats] = useState({
+    totalSalary: 0,
+    totalExpenses: 0
+  });
+  const [finLoading, setFinLoading] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -27,9 +34,25 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchFinancialStats = async () => {
+    try {
+      setFinLoading(true);
+      const { data } = await axios.get(`/api/users/financial-stats?month=${selectedMonth}`, { withCredentials: true });
+      setFinancialStats(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFinLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    fetchFinancialStats();
+  }, [selectedMonth]);
 
   const generateReport = () => {
     const csvContent = [
@@ -88,6 +111,84 @@ const AdminDashboard = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Financial Overview - Month Wise */}
+      <div className="glass-panel p-6 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">Financial Overview</h2>
+            <p className="text-sm text-slate-500">Month-wise Salary & Expenses Breakdown</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-slate-600">Filter Month:</label>
+            <input 
+              type="month" 
+              className="input-field max-w-[180px]"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Summary Cards */}
+          <div className="space-y-4">
+            <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
+              <p className="text-slate-500 text-sm font-medium mb-1">Total Net Salary</p>
+              <h3 className="text-2xl font-bold text-primary">₹{financialStats.totalSalary.toLocaleString()}</h3>
+            </div>
+            <div className="p-6 bg-danger/5 rounded-2xl border border-danger/10">
+              <p className="text-slate-500 text-sm font-medium mb-1">Total Approved Expenses</p>
+              <h3 className="text-2xl font-bold text-danger">₹{financialStats.totalExpenses.toLocaleString()}</h3>
+            </div>
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+              <p className="text-slate-500 text-sm font-medium mb-1">Combined Outflow</p>
+              <h3 className="text-2xl font-bold text-slate-800">₹{(financialStats.totalSalary + financialStats.totalExpenses).toLocaleString()}</h3>
+            </div>
+          </div>
+
+          {/* Pie Chart */}
+          <div className="lg:col-span-2 h-[350px] relative flex items-center justify-center">
+            {finLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : null}
+            
+            {(financialStats.totalSalary === 0 && financialStats.totalExpenses === 0) ? (
+              <div className="text-slate-400 text-center">
+                <Calendar size={48} className="mx-auto mb-2 opacity-20" />
+                <p>No financial data for this month</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Salaries', value: financialStats.totalSalary },
+                      { name: 'Expenses', value: financialStats.totalExpenses }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    <Cell fill="#4f46e5" />
+                    <Cell fill="#ef4444" />
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => `₹${value.toLocaleString()}`}
+                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                  />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
