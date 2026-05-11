@@ -1,7 +1,27 @@
 import Attendance from '../models/Attendance.js';
 import User from '../models/User.js';
 import AttendanceCorrection from '../models/AttendanceCorrection.js';
+import Break from '../models/Break.js';
 import { Op } from 'sequelize';
+
+const calculateDiffMinutes = (startStr, endStr) => {
+  if (!startStr || !endStr) return 0;
+  
+  const parseTime = (t) => {
+    let hours, minutes;
+    if (t.includes('AM') || t.includes('PM')) {
+      const [time, modifier] = t.split(' ');
+      [hours, minutes] = time.split(':').map(Number);
+      if (modifier === 'PM' && hours < 12) hours += 12;
+      if (modifier === 'AM' && hours === 12) hours = 0;
+    } else {
+      [hours, minutes] = t.split(':').map(Number);
+    }
+    return hours * 60 + minutes;
+  };
+
+  return parseTime(endStr) - parseTime(startStr);
+};
 
 export const getMyAttendance = async (req, res) => {
   try {
@@ -24,7 +44,10 @@ export const getTeamAttendance = async (req, res) => {
 
     const attendance = await Attendance.findAll({
       where: { userId: { [Op.in]: teamIds } },
-      include: [{ model: User, as: 'user', attributes: ['name'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['name', 'employmentType'] },
+        { model: Break, as: 'breaks' }
+      ],
       order: [['date', 'DESC']]
     });
     const mapped = attendance.map(a => ({ ...a.toJSON(), _id: a.id }));
@@ -37,7 +60,10 @@ export const getTeamAttendance = async (req, res) => {
 export const getAllAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findAll({
-      include: [{ model: User, as: 'user', attributes: ['name'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['name', 'employmentType'] },
+        { model: Break, as: 'breaks' }
+      ],
       order: [['date', 'DESC']]
     });
     const mapped = attendance.map(a => ({ ...a.toJSON(), _id: a.id }));
@@ -169,11 +195,23 @@ export const selfAttendanceAction = async (req, res) => {
       if (req.file) attendance.eodAttachment = `/uploads/eod/${req.file.filename}`;
       await attendance.save();
     } else if (type === 'break-in') {
-      attendance.breakIn = time;
+      const activeBreak = await Break.findOne({ where: { attendanceId: attendance.id, endTime: null } });
+      if (activeBreak) return res.status(400).json({ message: 'Already on a break' });
+      
+      await Break.create({ attendanceId: attendance.id, startTime: time });
       attendance.status = 'On Break';
       await attendance.save();
     } else if (type === 'break-out') {
-      attendance.breakOut = time;
+      const activeBreak = await Break.findOne({ 
+        where: { attendanceId: attendance.id, endTime: null },
+        order: [['createdAt', 'DESC']]
+      });
+      if (!activeBreak) return res.status(400).json({ message: 'No active break found' });
+      
+      activeBreak.endTime = time;
+      activeBreak.durationMinutes = calculateDiffMinutes(activeBreak.startTime, time);
+      await activeBreak.save();
+      
       attendance.status = 'Present';
       await attendance.save();
     }
@@ -187,7 +225,10 @@ export const selfAttendanceAction = async (req, res) => {
 export const getAttendanceStatus = async (req, res) => {
   try {
     const date = new Date().toLocaleDateString('en-CA');
-    const attendance = await Attendance.findOne({ where: { userId: req.user.id, date } });
+    const attendance = await Attendance.findOne({ 
+      where: { userId: req.user.id, date },
+      include: [{ model: Break, as: 'breaks' }]
+    });
     res.json(attendance || { status: 'Not Clocked In' });
   } catch (error) {
     res.status(500).json({ message: error.message });

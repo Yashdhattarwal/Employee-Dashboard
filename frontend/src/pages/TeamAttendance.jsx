@@ -116,47 +116,46 @@ const TeamManagement = () => {
     e.employeeId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calculateHours = (start, end, bStart, bEnd) => {
+  const calculateBreakStats = (breaks, empType) => {
+    if (!breaks || breaks.length === 0) return { total: 0, count: 0, exceeded: false };
+    const total = breaks.reduce((acc, b) => acc + (b.durationMinutes || 0), 0);
+    const limit = empType === 'Part-time' ? 15 : 30;
+    return {
+      total,
+      count: breaks.length,
+      exceeded: total > limit || breaks.length > 3
+    };
+  };
+
+  const getBreakPenalty = (breaks) => {
+    if (!breaks || breaks.length <= 3) return 0;
+    return breaks.length - 3;
+  };
+
+  const calculateHours = (start, end, breaks = []) => {
     if (!start || !end || start === '--:--' || end === '--:--') return 0;
     
     const parseTime = (t) => {
       if (!t || typeof t !== 'string') return null;
-      // Remove AM/PM and split
       const cleanT = t.replace(/(AM|PM)/gi, '').trim();
       const parts = cleanT.split(':');
       if (parts.length < 2) return null;
-      
-      const h = parseInt(parts[0], 10);
+      let h = parseInt(parts[0], 10);
       const m = parseInt(parts[1], 10);
-      
-      if (isNaN(h) || isNaN(m)) return null;
-
-      // Handle PM if original string had it (simple 12h to 24h)
-      let totalMins = h * 60 + m;
-      if (t.toUpperCase().includes('PM') && h < 12) totalMins += 12 * 60;
-      if (t.toUpperCase().includes('AM') && h === 12) totalMins -= 12 * 60;
-      
-      return totalMins;
+      if (t.toUpperCase().includes('PM') && h < 12) h += 12;
+      if (t.toUpperCase().includes('AM') && h === 12) h = 0;
+      return h * 60 + m;
     };
 
-    const startMins = parseTime(start);
-    const endMins = parseTime(end);
+    const s = parseTime(start);
+    const e = parseTime(end);
+    if (s === null || e === null) return 0;
     
-    if (startMins === null || endMins === null) return 0;
+    let diff = e - s;
+    if (diff < 0) diff += 1440;
     
-    let mins = endMins - startMins;
-    
-    if (bStart && bEnd) {
-      const bs = parseTime(bStart);
-      const be = parseTime(bEnd);
-      if (bs !== null && be !== null) {
-        const bMins = be - bs;
-        if (bMins > 0) mins -= bMins;
-      }
-    }
-    
-    const result = mins / 60;
-    return isNaN(result) ? 0 : Math.max(0, result);
+    const totalBreakMinutes = breaks.reduce((acc, b) => acc + (b.durationMinutes || 0), 0);
+    return (diff - totalBreakMinutes) / 60;
   };
 
   const formatDuration = (hours) => {
@@ -178,8 +177,9 @@ const TeamManagement = () => {
   
   const stats = {
     presentDays: employeeRecords.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
+    totalPenaltyDays: employeeRecords.reduce((acc, r) => acc + getBreakPenalty(r.breaks), 0),
     totalHours: employeeRecords.reduce((acc, r) => {
-      const h = calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut);
+      const h = calculateHours(r.checkIn, r.checkOut, r.breaks);
       return acc + (isNaN(h) ? 0 : h);
     }, 0)
   };
@@ -305,9 +305,13 @@ const TeamManagement = () => {
                 <p className="text-[10px] font-bold text-primary uppercase">Total Present</p>
                 <p className="text-xl font-bold text-primary">{stats.presentDays}</p>
               </div>
-              <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-center">
+               <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-center">
                 <p className="text-[10px] font-bold text-indigo-600 uppercase">Total Hours</p>
                 <p className="text-xl font-bold text-indigo-600">{formatDuration(stats.totalHours)}</p>
+              </div>
+              <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 text-center">
+                <p className="text-[10px] font-bold text-rose-600 uppercase">Penalty Days</p>
+                <p className="text-xl font-bold text-rose-600">{stats.totalPenaltyDays}</p>
               </div>
             </div>
           </div>
@@ -335,6 +339,7 @@ const TeamManagement = () => {
                   <th className="table-header">Date</th>
                   <th className="table-header">Check In</th>
                   <th className="table-header">Check Out</th>
+                  <th className="table-header">Breaks</th>
                   <th className="table-header">Hours</th>
                   <th className="table-header">Type</th>
                   <th className="table-header">Status</th>
@@ -347,8 +352,21 @@ const TeamManagement = () => {
                     <td className="table-cell font-medium text-slate-600">{r.date}</td>
                     <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
                     <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
+                    <td className="table-cell">
+                      {(() => {
+                        const bStats = calculateBreakStats(r.breaks, selectedEmployee?.employmentType);
+                        return (
+                          <div className={`flex flex-col ${bStats.exceeded ? 'text-danger font-bold' : 'text-slate-600'}`}>
+                            <span className="text-xs">{bStats.total}m ({bStats.count})</span>
+                            {getBreakPenalty(r.breaks) > 0 && (
+                              <span className="text-[10px] text-danger font-bold">Penalty: {getBreakPenalty(r.breaks)}d</span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="table-cell font-bold text-slate-700">
-                      {formatDuration(calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut))}
+                      {formatDuration(calculateHours(r.checkIn, r.checkOut, r.breaks))}
                     </td>
                     <td className="table-cell">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${

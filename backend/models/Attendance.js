@@ -55,7 +55,8 @@ const Attendance = sequelize.define('Attendance', {
   },
 });
 
-Attendance.belongsTo(User, { as: 'user', foreignKey: 'userId' });
-Attendance.belongsTo(User, { as: 'marker', foreignKey: 'markedBy' });
+import Break from './Break.js';
+Attendance.hasMany(Break, { as: 'breaks', foreignKey: 'attendanceId' });
+Break.belongsTo(Attendance, { foreignKey: 'attendanceId' });
 
 export default Attendance;
