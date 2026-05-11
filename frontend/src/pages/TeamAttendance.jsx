@@ -160,6 +160,7 @@ const TeamManagement = () => {
   };
 
   const formatDuration = (hours) => {
+    if (hours === null || hours === undefined || isNaN(hours)) return '0m';
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
     if (h === 0 && m === 0) return '0m';
@@ -551,7 +552,7 @@ const TeamManagement = () => {
                 <div>
                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Attachment</h3>
                   <a 
-                    href={`${axios.defaults.baseURL || ''}${selectedEod.eodAttachment}`}
+                    href={selectedEod.eodAttachment.startsWith('http') ? selectedEod.eodAttachment : `${axios.defaults.baseURL || ''}${selectedEod.eodAttachment}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
