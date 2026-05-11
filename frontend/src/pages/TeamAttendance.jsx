@@ -1,12 +1,64 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Calendar, Search, Filter, Plus, X, Edit2, Trash2, ChevronRight, User, ArrowLeft, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Search, Filter, Plus, X, Edit2, Trash2, ChevronRight, User, ArrowLeft, Clock, CheckCircle, Coffee } from 'lucide-react';
 
 const TeamManagement = () => {
   const { user } = useContext(AuthContext);
   const [employees, setEmployees] = useState([]);
   const [allRecords, setAllRecords] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const parseTimeToDate = (timeStr) => {
+    if (!timeStr) return null;
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+    const d = new Date(currentTime);
+    d.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    return d;
+  };
+
+  const getLiveStats = (r) => {
+    if (!r || !r.checkIn || r.status === 'Checked Out') return null;
+    
+    const checkInDate = parseTimeToDate(r.checkIn);
+    if (!checkInDate) return null;
+
+    let totalBreakMs = (r.breaks || []).reduce((acc, b) => {
+      if (b.durationMinutes) return acc + (b.durationMinutes * 60000);
+      return acc;
+    }, 0);
+
+    let currentBreakMs = 0;
+    if (r.status === 'On Break') {
+      const activeBreak = r.breaks?.find(b => !b.endTime);
+      if (activeBreak) {
+        const breakStartDate = parseTimeToDate(activeBreak.startTime);
+        if (breakStartDate) currentBreakMs = Math.max(0, currentTime - breakStartDate);
+      }
+    }
+
+    const totalElapsed = Math.max(0, currentTime - checkInDate);
+    return {
+      work: Math.max(0, totalElapsed - totalBreakMs - currentBreakMs),
+      break: Math.max(0, currentBreakMs)
+    };
+  };
+
+  const formatMs = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -281,6 +333,22 @@ const TeamManagement = () => {
                   <div>
                     <h3 className="font-bold text-slate-800">{emp.name}</h3>
                     <p className="text-sm text-slate-500">{emp.employeeId}</p>
+                    {(() => {
+                      const live = getLiveStats(emp.todayStatus);
+                      if (!live) return null;
+                      return (
+                        <div className="flex items-center gap-2 mt-2">
+                           <div className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
+                              <Clock size={10} /> {formatMs(live.work)}
+                           </div>
+                           {emp.todayStatus.status === 'On Break' && (
+                             <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/10 text-amber-500 text-[10px] font-bold rounded">
+                                <Coffee size={10} /> {formatMs(live.break)}
+                             </div>
+                           )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 <ChevronRight className="text-slate-300 group-hover:text-primary transition-colors" />
@@ -333,6 +401,24 @@ const TeamManagement = () => {
                 <p className="text-xl font-bold text-rose-600">{stats.totalPenaltyDays}</p>
               </div>
             </div>
+            {(() => {
+              const live = getLiveStats(selectedEmployee.todayStatus);
+              if (!live) return null;
+              return (
+                <div className="mt-4 p-3 bg-primary/5 rounded-xl border border-primary/10 flex items-center justify-around">
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold text-primary uppercase">Live Work Time</p>
+                    <p className="text-xl font-mono font-bold text-primary">{formatMs(live.work)}</p>
+                  </div>
+                  {selectedEmployee.todayStatus.status === 'On Break' && (
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-amber-500 uppercase">Current Break</p>
+                      <p className="text-xl font-mono font-bold text-amber-500">{formatMs(live.break)}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Attendance List */}

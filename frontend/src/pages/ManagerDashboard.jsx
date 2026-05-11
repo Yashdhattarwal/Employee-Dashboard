@@ -25,6 +25,65 @@ const ManagerDashboard = () => {
     attachment: null
   });
   const [submittingEod, setSubmittingEod] = useState(false);
+  const [liveTime, setLiveTime] = useState({ work: 0, break: 0 });
+
+  const parseTimeToDate = (timeStr) => {
+    if (!timeStr) return null;
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+    const d = new Date();
+    d.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    return d;
+  };
+
+  useEffect(() => {
+    if (!attendance || attendance.status === 'Checked Out') {
+      setLiveTime({ work: 0, break: 0 });
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      const checkInDate = parseTimeToDate(attendance.checkIn);
+      if (!checkInDate) return;
+
+      let totalBreakMs = (attendance.breaks || []).reduce((acc, b) => {
+        if (b.durationMinutes) return acc + (b.durationMinutes * 60000);
+        return acc;
+      }, 0);
+
+      let currentBreakMs = 0;
+      if (attendance.status === 'On Break') {
+        const activeBreak = attendance.breaks?.find(b => !b.endTime);
+        if (activeBreak) {
+          const breakStartDate = parseTimeToDate(activeBreak.startTime);
+          if (breakStartDate) {
+            currentBreakMs = Math.max(0, now - breakStartDate);
+          }
+        }
+      }
+
+      const totalElapsed = Math.max(0, now - checkInDate);
+      const workingMs = totalElapsed - totalBreakMs - currentBreakMs;
+
+      setLiveTime({
+        work: Math.max(0, workingMs),
+        break: Math.max(0, currentBreakMs)
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [attendance]);
+
+  const formatMs = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const fetchStatus = async () => {
     try {
@@ -124,10 +183,21 @@ const ManagerDashboard = () => {
             </button>
           ) : (
             <>
-              <div className="flex-1 min-w-[200px] bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Status</p>
-                <p className="text-xl font-bold text-slate-800 mt-1">{attendance.status}</p>
-                <p className="text-sm text-slate-500 mt-1">Started at {attendance.checkIn}</p>
+              <div className="flex-1 min-w-[200px] bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Status: <span className="text-slate-800 font-bold">{attendance.status}</span></p>
+                  <p className="text-sm text-slate-500 mt-1">Started at {attendance.checkIn}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-primary uppercase">Live Work Time</p>
+                  <p className="text-2xl font-mono font-bold text-primary">{formatMs(liveTime.work)}</p>
+                  {attendance.status === 'On Break' && (
+                    <div className="mt-1">
+                      <p className="text-[10px] font-bold text-amber-500 uppercase">Current Break</p>
+                      <p className="text-lg font-mono font-bold text-amber-500">{formatMs(liveTime.break)}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-3">
