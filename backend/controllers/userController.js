@@ -260,6 +260,8 @@ export const getFinancialStats = async (req, res) => {
       month,
       totalSalary: Math.round(totalSalary * 100) / 100,
       totalExpenses: Math.round(totalExpenses * 100) / 100,
+      salaryCount: payrolls.length,
+      expenseCount: expenses.length,
       currency: 'INR'
     });
   } catch (error) {

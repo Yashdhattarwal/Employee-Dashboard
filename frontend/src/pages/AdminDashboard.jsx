@@ -20,7 +20,9 @@ const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [financialStats, setFinancialStats] = useState({
     totalSalary: 0,
-    totalExpenses: 0
+    totalExpenses: 0,
+    salaryCount: 0,
+    expenseCount: 0
   });
   const [finLoading, setFinLoading] = useState(false);
 
@@ -135,11 +137,11 @@ const AdminDashboard = () => {
           {/* Summary Cards */}
           <div className="space-y-4">
             <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
-              <p className="text-slate-500 text-sm font-medium mb-1">Total Net Salary</p>
+              <p className="text-slate-500 text-sm font-medium mb-1">Total Net Salary ({financialStats.salaryCount || 0} Payrolls)</p>
               <h3 className="text-2xl font-bold text-primary">₹{financialStats.totalSalary.toLocaleString()}</h3>
             </div>
             <div className="p-6 bg-danger/5 rounded-2xl border border-danger/10">
-              <p className="text-slate-500 text-sm font-medium mb-1">Total Approved Expenses</p>
+              <p className="text-slate-500 text-sm font-medium mb-1">Total Approved Expenses ({financialStats.expenseCount || 0} Items)</p>
               <h3 className="text-2xl font-bold text-danger">₹{financialStats.totalExpenses.toLocaleString()}</h3>
             </div>
             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
