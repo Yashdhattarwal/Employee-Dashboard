@@ -241,9 +241,11 @@ export const getFinancialStats = async (req, res) => {
     // Normalize to INR for comparison
     const totalSalary = payrolls.reduce((acc, p) => {
       const amount = p.netSalary || 0;
-      const rate = p.exchangeRate || 1;
+      // Only multiply by exchange rate if the record is in USD
+      // If it's INR, the rate should effectively be 1
+      const rate = (p.currency === 'USD') ? (p.exchangeRate || 83) : 1;
       const contribution = amount * rate;
-      console.log(` - UserID ${p.userId}: Net ${amount} * Rate ${rate} = ${contribution}`);
+      console.log(` - UserID ${p.userId}: Net ${amount} (${p.currency}) * Factor ${rate} = ${contribution}`);
       return acc + contribution;
     }, 0);
 
