@@ -12,6 +12,7 @@ const TeamManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   
   const [formData, setFormData] = useState({
     userId: '', date: new Date().toISOString().split('T')[0], status: 'Present', checkIn: '09:00', checkOut: '17:00', remarks: ''
@@ -125,7 +126,12 @@ const TeamManagement = () => {
     return Math.max(0, mins / 60);
   };
 
-  const employeeRecords = selectedEmployee ? allRecords.filter(r => r.userId === selectedEmployee.id) : [];
+  const employeeRecords = selectedEmployee ? allRecords.filter(r => 
+    r.userId === selectedEmployee.id && 
+    r.date.startsWith(filterMonth)
+  ) : [];
+
+  const filteredCorrections = corrections.filter(c => c.date?.startsWith(filterMonth));
   
   const stats = {
     presentDays: employeeRecords.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
@@ -150,15 +156,26 @@ const TeamManagement = () => {
         </div>
         
         {!selectedEmployee && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by name or ID..." 
-              className="input-field pl-10 py-2 w-full md:w-64"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+              <span className="text-xs font-bold text-slate-400 uppercase">Month:</span>
+              <input 
+                type="month" 
+                className="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+              />
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by name or ID..." 
+                className="input-field pl-10 py-2 w-full md:w-64"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         )}
 
@@ -247,6 +264,15 @@ const TeamManagement = () => {
                 <Calendar size={20} className="text-primary" />
                 Attendance History
               </h2>
+              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                <span className="text-xs font-bold text-slate-400 uppercase">Filter Month:</span>
+                <input 
+                  type="month" 
+                  className="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer"
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                />
+              </div>
             </div>
             <table className="w-full text-left border-collapse">
               <thead>
@@ -319,7 +345,7 @@ const TeamManagement = () => {
               Attendance Correction Requests
             </h2>
             <div className="space-y-3">
-              {corrections.map(c => (
+              {filteredCorrections.map(c => (
                 <div key={c.id} className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
                   <div className="flex flex-wrap justify-between items-center gap-2">
                     <p className="text-sm font-bold text-slate-800">
