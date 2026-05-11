@@ -35,6 +35,20 @@ const Leaves = () => {
 
   const handleApply = async (e) => {
     e.preventDefault();
+    
+    // Frontend Restriction: Medical Leave same/next day
+    if (formData.type === 'Medical Leave') {
+      const today = new Date().toLocaleDateString('en-CA');
+      const tomorrowDate = new Date();
+      tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+      const tomorrow = tomorrowDate.toLocaleDateString('en-CA');
+      
+      if (formData.fromDate !== today && formData.fromDate !== tomorrow) {
+        alert('Medical Leave can only be applied for today or tomorrow.');
+        return;
+      }
+    }
+
     try {
       await axios.post('/api/leaves', formData, { withCredentials: true });
       setShowModal(false);
