@@ -154,6 +154,15 @@ const TeamManagement = () => {
     return isNaN(result) ? 0 : Math.max(0, result);
   };
 
+  const formatDuration = (hours) => {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    if (h === 0 && m === 0) return '0m';
+    if (h === 0) return `${m}m`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}m`;
+  };
+
   const employeeRecords = selectedEmployee ? allRecords.filter(r => 
     r.userId === selectedEmployee.id && 
     r.date.startsWith(filterMonth)
@@ -283,7 +292,7 @@ const TeamManagement = () => {
               </div>
               <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-center">
                 <p className="text-[10px] font-bold text-indigo-600 uppercase">Total Hours</p>
-                <p className="text-xl font-bold text-indigo-600">{stats.totalHours.toFixed(1)}h</p>
+                <p className="text-xl font-bold text-indigo-600">{formatDuration(stats.totalHours)}</p>
               </div>
             </div>
           </div>
@@ -324,7 +333,7 @@ const TeamManagement = () => {
                     <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
                     <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
                     <td className="table-cell font-bold text-slate-700">
-                      {calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut).toFixed(1)}h
+                      {formatDuration(calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut))}
                     </td>
                     <td className="table-cell">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${

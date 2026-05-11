@@ -61,6 +61,15 @@ const Attendance = () => {
     return isNaN(result) ? 0 : Math.max(0, result);
   };
 
+  const formatDuration = (hours) => {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    if (h === 0 && m === 0) return '0m';
+    if (h === 0) return `${m}m`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}m`;
+  };
+
   const stats = {
     presentDays: records.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
     totalHours: records.reduce((acc, r) => {
@@ -84,7 +93,7 @@ const Attendance = () => {
           </div>
           <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
             <p className="text-[10px] font-bold text-indigo-600 uppercase">Working Hours</p>
-            <p className="text-lg font-bold text-indigo-600">{stats.totalHours.toFixed(1)}h</p>
+            <p className="text-lg font-bold text-indigo-600">{formatDuration(stats.totalHours)}</p>
           </div>
         </div>
       </div>
@@ -127,7 +136,7 @@ const Attendance = () => {
                     </div>
                   </td>
                   <td className="table-cell font-bold text-slate-700">
-                    {calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut).toFixed(1)}h
+                    {formatDuration(calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut))}
                   </td>
                   <td className="table-cell text-xs text-slate-500">
                     {r.breakIn ? `Break: ${r.breakIn} - ${r.breakOut || '...'}` : 'No Break Recorded'}
