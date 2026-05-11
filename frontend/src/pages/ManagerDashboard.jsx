@@ -225,8 +225,7 @@ const ManagerDashboard = () => {
             {stats.recentLeaves.length === 0 && <p className="text-center text-slate-400 py-12 text-sm italic">No team leave requests</p>}
           </div>
         </div>
-      </div>
-      </div>
+    </div>
 
       {/* EOD Report Modal */}
       {showEodModal && (
