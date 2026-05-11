@@ -39,32 +39,10 @@ export const connectDB = async () => {
     await sequelize.authenticate();
     console.log('Database connected...');
     
-    // Sync models - using alter: true to ensure new tables like 'Breaks' are created
-    await sequelize.sync({ alter: true });
-    
-    // Manual check/add columns for EOD report to be safe in production
-    const [results] = await sequelize.query(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = 'Attendances' AND COLUMN_NAME IN ('eodWork', 'pendingTasks', 'eodAttachment')
-    `);
+    // Sync models without 'alter' to avoid "Too many keys" error in MySQL
+    await sequelize.sync();
 
-    const existingColumns = results.map(r => r.COLUMN_NAME || r.column_name); // Handle case sensitivity
-    
-    if (!existingColumns.includes('eodWork')) {
-      await sequelize.query('ALTER TABLE Attendances ADD COLUMN eodWork TEXT');
-      console.log('Added eodWork column');
-    }
-    if (!existingColumns.includes('pendingTasks')) {
-      await sequelize.query('ALTER TABLE Attendances ADD COLUMN pendingTasks TEXT');
-      console.log('Added pendingTasks column');
-    }
-    if (!existingColumns.includes('eodAttachment')) {
-      await sequelize.query('ALTER TABLE Attendances ADD COLUMN eodAttachment VARCHAR(255)');
-      console.log('Added eodAttachment column');
-    }
-
-    console.log('Database synchronized and columns verified');
+    console.log('Database synchronized');
   } catch (error) {
     console.error('Database connection error:', error.message);
     process.exit(1);
