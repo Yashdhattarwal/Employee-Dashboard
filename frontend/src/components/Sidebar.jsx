@@ -15,12 +15,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     const items = [
       { name: 'Dashboard', path: `/${base}`, icon: LayoutDashboard },
-      { name: 'My Attendance', path: `/${base}/attendance`, icon: Calendar },
-      { name: 'Payroll', path: `/${base}/payroll`, icon: DollarSign },
     ];
 
+    if (user?.role !== 'admin') {
+      items.push({ name: 'My Attendance', path: `/${base}/attendance`, icon: Calendar });
+    }
+
+    items.push({ name: 'Payroll', path: `/${base}/payroll`, icon: DollarSign });
+
     if (user?.role === 'admin' || user?.role === 'manager') {
-      items.push({ name: 'Team Management', path: `/${base}/team-attendance`, icon: Users });
+      items.push({ name: 'Team Attendance', path: `/${base}/team-attendance`, icon: Users });
     }
 
     items.push(
