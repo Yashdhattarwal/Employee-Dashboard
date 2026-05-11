@@ -137,7 +137,7 @@ const AdminDashboard = () => {
           {/* Summary Cards */}
           <div className="space-y-4">
             <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
-              <p className="text-slate-500 text-sm font-medium mb-1">Total Net Salary ({financialStats.salaryCount || 0} Payrolls)</p>
+              <p className="text-slate-500 text-sm font-medium mb-1">Total Locked Salary ({financialStats.salaryCount || 0} Payrolls)</p>
               <h3 className="text-2xl font-bold text-primary">₹{financialStats.totalSalary.toLocaleString()}</h3>
             </div>
             <div className="p-6 bg-danger/5 rounded-2xl border border-danger/10">

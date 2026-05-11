@@ -232,7 +232,7 @@ export const getFinancialStats = async (req, res) => {
     const payrolls = await Payroll.findAll({
       where: { 
         month,
-        status: { [Op.in]: ['Approved', 'Locked'] }
+        status: 'Locked'
       }
     });
     
