@@ -27,6 +27,7 @@ export const getMyAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findAll({ 
       where: { userId: req.user.id },
+      include: [{ model: Break, as: 'breaks' }],
       order: [['date', 'DESC']]
     });
     const mapped = attendance.map(a => ({ ...a.toJSON(), _id: a.id }));
