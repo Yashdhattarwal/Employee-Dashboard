@@ -175,9 +175,10 @@ const TeamManagement = () => {
 
   const filteredCorrections = corrections.filter(c => c.date && typeof c.date === 'string' && c.date.startsWith(filterMonth));
   
-  const getMonthlyBreakStats = (records) => {
+  const getMonthlyBreakStats = (recs) => {
+    if (!recs || recs.length === 0) return { recordsWithPenalties: [], totalPenaltyDays: 0 };
     let totalBreaksInMonth = 0;
-    const recordsWithPenalties = records.map(r => {
+    const recordsWithPenalties = recs.map(r => {
       const dailyBreaks = r.breaks || [];
       const updatedBreaks = dailyBreaks.map(b => {
         totalBreaksInMonth++;

@@ -39,8 +39,8 @@ export const connectDB = async () => {
     await sequelize.authenticate();
     console.log('Database connected...');
     
-    // Sync models
-    await sequelize.sync();
+    // Sync models - using alter: true to ensure new tables like 'Breaks' are created
+    await sequelize.sync({ alter: true });
     
     // Manual check/add columns for EOD report to be safe in production
     const [results] = await sequelize.query(`

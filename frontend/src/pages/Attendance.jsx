@@ -72,10 +72,11 @@ const Attendance = () => {
     return `${h}h ${m}m`;
   };
 
-  const getMonthlyBreakStats = (records) => {
+  const getMonthlyBreakStats = (recs) => {
+    if (!recs || recs.length === 0) return { recordsWithPenalties: [], totalPenaltyDays: 0 };
     let totalBreaksInMonth = 0;
     // We need to sort by date to count correctly
-    const sorted = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = [...recs].sort((a, b) => new Date(a.date) - new Date(b.date));
     const recordsWithPenalties = sorted.map(r => {
       const dailyBreaks = r.breaks || [];
       const updatedBreaks = dailyBreaks.map(b => {
