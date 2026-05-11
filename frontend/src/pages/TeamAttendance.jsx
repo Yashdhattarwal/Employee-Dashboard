@@ -11,6 +11,8 @@ const TeamManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showEodModal, setShowEodModal] = useState(false);
+  const [selectedEod, setSelectedEod] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   
@@ -355,17 +357,29 @@ const TeamManagement = () => {
                         {r.status}
                       </span>
                     </td>
-                    <td className="table-cell text-right">
-                      {user.role === 'admin' && (
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => handleEditClick(r)} className="p-2 text-slate-400 hover:text-primary transition-colors">
-                            <Edit2 size={16} />
+                     <td className="table-cell text-right">
+                      <div className="flex justify-end gap-2">
+                        {r.eodWork && (
+                          <button 
+                            onClick={() => { setSelectedEod(r); setShowEodModal(true); }}
+                            className="p-2 text-slate-400 hover:text-success transition-colors group relative"
+                            title="View EOD Report"
+                          >
+                            <CheckCircle size={16} />
+                            <span className="absolute -top-8 right-0 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">View EOD</span>
                           </button>
-                          <button onClick={() => handleDeleteRecord(r.id)} className="p-2 text-slate-400 hover:text-danger transition-colors">
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      )}
+                        )}
+                        {user.role === 'admin' && (
+                          <>
+                            <button onClick={() => handleEditClick(r)} className="p-2 text-slate-400 hover:text-primary transition-colors">
+                              <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => handleDeleteRecord(r.id)} className="p-2 text-slate-400 hover:text-danger transition-colors">
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -424,7 +438,7 @@ const TeamManagement = () => {
         </div>
       )}
 
-      {showModal && (
+       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
@@ -486,6 +500,66 @@ const TeamManagement = () => {
                 <button type="submit" className="btn-primary flex-1">{editingId ? 'Update' : 'Save'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* EOD Details Modal */}
+      {showEodModal && selectedEod && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary p-6 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold">End of Day Report</h2>
+                <p className="text-primary-foreground/80 text-xs mt-1">Submitted by {selectedEmployee?.name} on {selectedEod.date}</p>
+              </div>
+              <button onClick={() => setShowEodModal(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Work Done Today</h3>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                  {selectedEod.eodWork}
+                </div>
+              </div>
+
+              {selectedEod.pendingTasks && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Pending Tasks</h3>
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                    {selectedEod.pendingTasks}
+                  </div>
+                </div>
+              )}
+
+              {selectedEod.eodAttachment && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Attachment</h3>
+                  <a 
+                    href={`${axios.defaults.baseURL || ''}${selectedEod.eodAttachment}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary border border-slate-100 shadow-sm group-hover:scale-110 transition-transform">
+                      <CheckCircle size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate">View Attachment</p>
+                      <p className="text-xs text-slate-500">Click to open in new tab</p>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-300 group-hover:text-primary transition-colors" />
+                  </a>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button onClick={() => setShowEodModal(false)} className="btn-primary px-8">Close Report</button>
+            </div>
           </div>
         </div>
       )}

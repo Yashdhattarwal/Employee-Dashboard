@@ -32,6 +32,18 @@ const Attendance = sequelize.define('Attendance', {
   remarks: {
     type: DataTypes.STRING,
   },
+  eodWork: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  pendingTasks: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  eodAttachment: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,

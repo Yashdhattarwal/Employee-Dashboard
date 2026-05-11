@@ -164,6 +164,9 @@ export const selfAttendanceAction = async (req, res) => {
     } else if (type === 'clock-out') {
       attendance.checkOut = time;
       attendance.status = 'Checked Out';
+      if (req.body.eodWork) attendance.eodWork = req.body.eodWork;
+      if (req.body.pendingTasks) attendance.pendingTasks = req.body.pendingTasks;
+      if (req.file) attendance.eodAttachment = `/uploads/eod/${req.file.filename}`;
       await attendance.save();
     } else if (type === 'break-in') {
       attendance.breakIn = time;
