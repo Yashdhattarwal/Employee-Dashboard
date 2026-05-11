@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Calendar, Search, Filter, Plus, X, Edit2, Trash2, ChevronRight, User, ArrowLeft, Clock } from 'lucide-react';
+import { Calendar, Search, Filter, Plus, X, Edit2, Trash2, ChevronRight, User, ArrowLeft, Clock, CheckCircle } from 'lucide-react';
 
 const TeamManagement = () => {
   const { user } = useContext(AuthContext);
@@ -171,10 +171,10 @@ const TeamManagement = () => {
 
   const employeeRecords = selectedEmployee ? allRecords.filter(r => 
     r.userId === selectedEmployee.id && 
-    r.date.startsWith(filterMonth)
+    r.date && typeof r.date === 'string' && r.date.startsWith(filterMonth)
   ) : [];
 
-  const filteredCorrections = corrections.filter(c => c.date?.startsWith(filterMonth));
+  const filteredCorrections = corrections.filter(c => c.date && typeof c.date === 'string' && c.date.startsWith(filterMonth));
   
   const stats = {
     presentDays: employeeRecords.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
