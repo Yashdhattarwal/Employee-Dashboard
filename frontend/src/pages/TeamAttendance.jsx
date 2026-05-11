@@ -175,9 +175,27 @@ const TeamManagement = () => {
 
   const filteredCorrections = corrections.filter(c => c.date && typeof c.date === 'string' && c.date.startsWith(filterMonth));
   
+  const getMonthlyBreakStats = (records) => {
+    let totalBreaksInMonth = 0;
+    const recordsWithPenalties = records.map(r => {
+      const dailyBreaks = r.breaks || [];
+      const updatedBreaks = dailyBreaks.map(b => {
+        totalBreaksInMonth++;
+        return { ...b, monthlyIndex: totalBreaksInMonth };
+      });
+      const dailyPenalty = updatedBreaks.filter(b => b.monthlyIndex > 3).length;
+      return { ...r, breaks: updatedBreaks, dailyPenalty };
+    });
+
+    const totalPenaltyDays = recordsWithPenalties.reduce((acc, r) => acc + r.dailyPenalty, 0);
+    return { recordsWithPenalties, totalPenaltyDays };
+  };
+
+  const { recordsWithPenalties, totalPenaltyDays } = getMonthlyBreakStats(employeeRecords);
+
   const stats = {
     presentDays: employeeRecords.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
-    totalPenaltyDays: employeeRecords.reduce((acc, r) => acc + getBreakPenalty(r.breaks), 0),
+    totalPenaltyDays: totalPenaltyDays,
     totalHours: employeeRecords.reduce((acc, r) => {
       const h = calculateHours(r.checkIn, r.checkOut, r.breaks);
       return acc + (isNaN(h) ? 0 : h);
@@ -347,7 +365,7 @@ const TeamManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {employeeRecords.map((r) => (
+                {recordsWithPenalties.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
                     <td className="table-cell font-medium text-slate-600">{r.date}</td>
                     <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
@@ -355,11 +373,12 @@ const TeamManagement = () => {
                     <td className="table-cell">
                       {(() => {
                         const bStats = calculateBreakStats(r.breaks, selectedEmployee?.employmentType);
+                        const hasMonthlyViolation = r.breaks.some(b => b.monthlyIndex > 3);
                         return (
-                          <div className={`flex flex-col ${bStats.exceeded ? 'text-danger font-bold' : 'text-slate-600'}`}>
-                            <span className="text-xs">{bStats.total}m ({bStats.count})</span>
-                            {getBreakPenalty(r.breaks) > 0 && (
-                              <span className="text-[10px] text-danger font-bold">Penalty: {getBreakPenalty(r.breaks)}d</span>
+                          <div className={`flex flex-col ${(bStats.exceeded || hasMonthlyViolation) ? 'text-danger font-bold' : 'text-slate-600'}`}>
+                            <span className="text-xs">{bStats.total}m ({bStats.count} total)</span>
+                            {r.dailyPenalty > 0 && (
+                              <span className="text-[10px] text-danger font-bold">Monthly Penalty: +{r.dailyPenalty}d</span>
                             )}
                           </div>
                         );
