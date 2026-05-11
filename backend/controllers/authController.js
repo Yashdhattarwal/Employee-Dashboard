@@ -38,6 +38,8 @@ export const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         employeeId: user.employeeId,
+        designation: user.designation,
+        employmentType: user.employmentType,
         managerName: user.manager?.name || 'N/A',
         firstTimeLogin: user.firstTimeLogin,
         token

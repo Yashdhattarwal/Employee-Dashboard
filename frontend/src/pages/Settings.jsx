@@ -31,6 +31,20 @@ const Settings = () => {
               <input type="text" disabled value={user?.role || ''} className="input-field bg-slate-100 capitalize" />
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Designation</label>
+            <div className="mt-1">
+              <input type="text" disabled value={user?.designation || 'N/A'} className="input-field bg-slate-100" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Employment Type</label>
+            <div className="mt-1">
+              <input type="text" disabled value={user?.employmentType || 'Full-time'} className="input-field bg-slate-100" />
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 border-t border-slate-200 pt-6">

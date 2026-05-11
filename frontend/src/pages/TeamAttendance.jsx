@@ -110,7 +110,27 @@ const TeamManagement = () => {
     e.employeeId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const calculateHours = (start, end, bStart, bEnd) => {
+    if (!start || !end) return 0;
+    const parseTime = (t) => {
+      if (!t) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+    let mins = parseTime(end) - parseTime(start);
+    if (bStart && bEnd) {
+      const bMins = parseTime(bEnd) - parseTime(bStart);
+      if (bMins > 0) mins -= bMins;
+    }
+    return Math.max(0, mins / 60);
+  };
+
   const employeeRecords = selectedEmployee ? allRecords.filter(r => r.userId === selectedEmployee.id) : [];
+  
+  const stats = {
+    presentDays: employeeRecords.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
+    totalHours: employeeRecords.reduce((acc, r) => acc + calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut), 0)
+  };
 
   if (loading && employees.length === 0) return <div className="p-12 text-center text-slate-500">Loading team data...</div>;
 
@@ -209,6 +229,14 @@ const TeamManagement = () => {
                   {selectedEmployee.activeStatus ? 'ACTIVE' : 'DEACTIVATED'}
                 </span>
               </div>
+              <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 text-center">
+                <p className="text-[10px] font-bold text-primary uppercase">Total Present</p>
+                <p className="text-xl font-bold text-primary">{stats.presentDays}</p>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-center">
+                <p className="text-[10px] font-bold text-indigo-600 uppercase">Total Hours</p>
+                <p className="text-xl font-bold text-indigo-600">{stats.totalHours.toFixed(1)}h</p>
+              </div>
             </div>
           </div>
 
@@ -226,6 +254,7 @@ const TeamManagement = () => {
                   <th className="table-header">Date</th>
                   <th className="table-header">Check In</th>
                   <th className="table-header">Check Out</th>
+                  <th className="table-header">Hours</th>
                   <th className="table-header">Type</th>
                   <th className="table-header">Status</th>
                   <th className="table-header text-right">Actions</th>
@@ -237,6 +266,9 @@ const TeamManagement = () => {
                     <td className="table-cell font-medium text-slate-600">{r.date}</td>
                     <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
                     <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
+                    <td className="table-cell font-bold text-slate-700">
+                      {calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut).toFixed(1)}h
+                    </td>
                     <td className="table-cell">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                         r.status === 'On Leave' ? 'bg-amber-500/10 text-amber-600' :

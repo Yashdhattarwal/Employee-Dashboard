@@ -16,7 +16,9 @@ const Users = () => {
     salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
     bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
     shiftTime: '09:00 AM',
-    shiftEndTime: '06:00 PM'
+    shiftEndTime: '06:00 PM',
+    designation: '',
+    employmentType: 'Full-time'
   });
 
   const fetchUsers = async () => {
@@ -51,7 +53,9 @@ const Users = () => {
         salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
         bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
         shiftTime: '09:00 AM',
-        shiftEndTime: '06:00 PM'
+        shiftEndTime: '06:00 PM',
+        designation: '',
+        employmentType: 'Full-time'
       });
       fetchUsers();
     } catch (err) {
@@ -84,7 +88,9 @@ const Users = () => {
       ifscCode: u.ifscCode || '',
       branchName: u.branchName || '',
       shiftTime: u.shiftTime || '09:00 AM',
-      shiftEndTime: u.shiftEndTime || '06:00 PM'
+      shiftEndTime: u.shiftEndTime || '06:00 PM',
+      designation: u.designation || '',
+      employmentType: u.employmentType || 'Full-time'
     });
     setShowModal(true);
   };
@@ -113,6 +119,7 @@ const Users = () => {
             <tr>
               <th className="table-header">Emp ID</th>
               <th className="table-header">Name</th>
+              <th className="table-header">Designation</th>
               <th className="table-header">Email</th>
               <th className="table-header">Role</th>
               <th className="table-header">Manager</th>
@@ -125,6 +132,7 @@ const Users = () => {
               <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                 <td className="table-cell font-medium text-slate-500">{u.employeeId}</td>
                 <td className="table-cell font-medium">{u.name}</td>
+                <td className="table-cell text-slate-500">{u.designation || '-'}</td>
                 <td className="table-cell">{u.email}</td>
                 <td className="table-cell capitalize">
                   <span className={`flex items-center gap-1 ${u.role === 'admin' ? 'text-primary font-bold' : ''}`}>
@@ -191,6 +199,12 @@ const Users = () => {
                   <label className="block text-sm font-medium text-slate-700">Full Name</label>
                   <input required type="text" className="input-field mt-1" 
                     value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Designation / Post</label>
+                  <input type="text" className="input-field mt-1" placeholder="e.g. Software Engineer"
+                    value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} 
                   />
                 </div>
               </div>
@@ -297,6 +311,16 @@ const Users = () => {
                       value={formData.shiftEndTime} onChange={e => setFormData({...formData, shiftEndTime: e.target.value})}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Employment Type</label>
+                  <select className="input-field mt-1" 
+                    value={formData.employmentType} onChange={e => setFormData({...formData, employmentType: e.target.value})}
+                  >
+                    <option value="Full-time">Full-time (8hrs+)</option>
+                    <option value="Part-time">Part-time (4hrs+)</option>
+                  </select>
                 </div>
                 
                 {formData.role === 'employee' && (

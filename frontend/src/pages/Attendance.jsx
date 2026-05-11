@@ -18,13 +18,45 @@ const Attendance = () => {
     }
   };
 
+  const calculateHours = (start, end, bStart, bEnd) => {
+    if (!start || !end) return 0;
+    const parseTime = (t) => {
+      if (!t) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+    let mins = parseTime(end) - parseTime(start);
+    if (bStart && bEnd) {
+      const bMins = parseTime(bEnd) - parseTime(bStart);
+      if (bMins > 0) mins -= bMins;
+    }
+    return Math.max(0, mins / 60);
+  };
+
+  const stats = {
+    presentDays: records.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
+    totalHours: records.reduce((acc, r) => acc + calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut), 0)
+  };
+
   useEffect(() => {
     fetchAttendance();
   }, []);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">My Attendance History</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-slate-800">My Attendance History</h1>
+        <div className="flex gap-4">
+          <div className="bg-primary/5 px-4 py-2 rounded-xl border border-primary/10">
+            <p className="text-[10px] font-bold text-primary uppercase">Present Days</p>
+            <p className="text-lg font-bold text-primary">{stats.presentDays}</p>
+          </div>
+          <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
+            <p className="text-[10px] font-bold text-indigo-600 uppercase">Working Hours</p>
+            <p className="text-lg font-bold text-indigo-600">{stats.totalHours.toFixed(1)}h</p>
+          </div>
+        </div>
+      </div>
 
       <div className="glass-panel overflow-hidden">
         {loading ? (
@@ -36,6 +68,7 @@ const Attendance = () => {
                 <th className="table-header">Date</th>
                 <th className="table-header">Check In</th>
                 <th className="table-header">Check Out</th>
+                <th className="table-header">Work Hours</th>
                 <th className="table-header">Break Info</th>
                 <th className="table-header">Type</th>
                 <th className="table-header">Status</th>
@@ -61,6 +94,9 @@ const Attendance = () => {
                       <LogOut size={14} className="text-danger" />
                       {r.checkOut || '-'}
                     </div>
+                  </td>
+                  <td className="table-cell font-bold text-slate-700">
+                    {calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut).toFixed(1)}h
                   </td>
                   <td className="table-cell text-xs text-slate-500">
                     {r.breakIn ? `Break: ${r.breakIn} - ${r.breakOut || '...'}` : 'No Break Recorded'}
