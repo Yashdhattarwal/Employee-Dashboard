@@ -178,8 +178,14 @@ const Leaves = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700">From Date</label>
-                  <input required type="date" className="input-field mt-1" 
-                    value={formData.fromDate} onChange={e => setFormData({...formData, fromDate: e.target.value})} 
+                  <input 
+                    required 
+                    type="date" 
+                    className="input-field mt-1" 
+                    min={formData.type === 'Medical Leave' ? new Date().toLocaleDateString('en-CA') : undefined}
+                    max={formData.type === 'Medical Leave' ? new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString('en-CA') : undefined}
+                    value={formData.fromDate} 
+                    onChange={e => setFormData({...formData, fromDate: e.target.value})} 
                   />
                 </div>
                 <div>
