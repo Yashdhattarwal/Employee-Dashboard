@@ -6,8 +6,8 @@ export const applyLeave = async (req, res) => {
   try {
     const { type, fromDate, toDate, reason } = req.body;
 
-    // Senior Requirement: Limit Sick Leave to same day and next day
-    if (type === 'Sick Leave') {
+    // Senior Requirement: Limit Medical Leave to same day and next day
+    if (type === 'Medical Leave') {
       const todayStr = new Date().toLocaleDateString('en-CA');
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -17,7 +17,7 @@ export const applyLeave = async (req, res) => {
 
       if (requestedFromStr !== todayStr && requestedFromStr !== tomorrowStr) {
         return res.status(400).json({ 
-          message: 'Sick Leave can only be applied for today or tomorrow.' 
+          message: 'Medical Leave can only be applied for today or tomorrow.' 
         });
       }
     }
