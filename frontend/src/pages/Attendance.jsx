@@ -19,23 +19,54 @@ const Attendance = () => {
   };
 
   const calculateHours = (start, end, bStart, bEnd) => {
-    if (!start || !end) return 0;
+    if (!start || !end || start === '--:--' || end === '--:--') return 0;
+    
     const parseTime = (t) => {
-      if (!t) return 0;
-      const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
+      if (!t || typeof t !== 'string') return null;
+      // Remove AM/PM and split
+      const cleanT = t.replace(/(AM|PM)/gi, '').trim();
+      const parts = cleanT.split(':');
+      if (parts.length < 2) return null;
+      
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      
+      if (isNaN(h) || isNaN(m)) return null;
+
+      // Handle PM if original string had it (simple 12h to 24h)
+      let totalMins = h * 60 + m;
+      if (t.toUpperCase().includes('PM') && h < 12) totalMins += 12 * 60;
+      if (t.toUpperCase().includes('AM') && h === 12) totalMins -= 12 * 60;
+      
+      return totalMins;
     };
-    let mins = parseTime(end) - parseTime(start);
+
+    const startMins = parseTime(start);
+    const endMins = parseTime(end);
+    
+    if (startMins === null || endMins === null) return 0;
+    
+    let mins = endMins - startMins;
+    
     if (bStart && bEnd) {
-      const bMins = parseTime(bEnd) - parseTime(bStart);
-      if (bMins > 0) mins -= bMins;
+      const bs = parseTime(bStart);
+      const be = parseTime(bEnd);
+      if (bs !== null && be !== null) {
+        const bMins = be - bs;
+        if (bMins > 0) mins -= bMins;
+      }
     }
-    return Math.max(0, mins / 60);
+    
+    const result = mins / 60;
+    return isNaN(result) ? 0 : Math.max(0, result);
   };
 
   const stats = {
     presentDays: records.filter(r => ['Present', 'Checked In', 'Checked Out'].includes(r.status)).length,
-    totalHours: records.reduce((acc, r) => acc + calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut), 0)
+    totalHours: records.reduce((acc, r) => {
+      const h = calculateHours(r.checkIn, r.checkOut, r.breakIn, r.breakOut);
+      return acc + (isNaN(h) ? 0 : h);
+    }, 0)
   };
 
   useEffect(() => {
