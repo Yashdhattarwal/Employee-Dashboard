@@ -37,13 +37,11 @@ if (isProduction && process.env.DATABASE_URL) {
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log(isProduction ? `Cloud Database (${sequelize.getDialect().toUpperCase()}) Connected.` : 'Local Database (SQLite) Connected.');
-    try {
-      await sequelize.sync({ alter: true }); 
-    } catch (syncError) {
-      console.warn('Sync alter failed, running standard sync:', syncError.message);
-      await sequelize.sync(); 
-    }  } catch (error) {
+    console.log('Database connected...');
+    // Sync models to database - alter: true will add missing columns
+    await sequelize.sync({ alter: true });
+    console.log('Database synchronized');
+  } catch (error) {
     console.error('Database connection error:', error.message);
     process.exit(1);
   }
