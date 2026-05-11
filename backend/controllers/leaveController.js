@@ -5,6 +5,23 @@ import Attendance from '../models/Attendance.js';
 export const applyLeave = async (req, res) => {
   try {
     const { type, fromDate, toDate, reason } = req.body;
+
+    // Senior Requirement: Limit Sick Leave to same day and next day
+    if (type === 'Sick Leave') {
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toLocaleDateString('en-CA');
+
+      const requestedFromStr = fromDate.split('T')[0];
+
+      if (requestedFromStr !== todayStr && requestedFromStr !== tomorrowStr) {
+        return res.status(400).json({ 
+          message: 'Sick Leave can only be applied for today or tomorrow.' 
+        });
+      }
+    }
+
     const user = await User.findByPk(req.user.id);
 
     const leave = await Leave.create({

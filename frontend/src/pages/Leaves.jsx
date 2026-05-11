@@ -10,7 +10,7 @@ const Leaves = () => {
   const [showModal, setShowModal] = useState(false);
   
   const [formData, setFormData] = useState({
-    type: 'Annual', fromDate: '', toDate: '', reason: ''
+    type: 'Medical Leave', fromDate: '', toDate: '', reason: ''
   });
 
   const fetchLeaves = async () => {
@@ -155,9 +155,10 @@ const Leaves = () => {
                 <select className="input-field mt-1" 
                   value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}
                 >
-                  <option value="Annual">Annual Leave</option>
-                  <option value="Sick">Sick Leave</option>
-                  <option value="Casual">Casual Leave</option>
+                  <option value="Medical Leave">Medical Leave</option>
+                  <option value="Sick Leave">Sick Leave</option>
+                  <option value="Festival Leave">Festival Leave</option>
+                  <option value="Casual Leave">Casual Leave</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
