@@ -9,6 +9,7 @@ const TeamManagement = () => {
   const [allRecords, setAllRecords] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showEodModal, setShowEodModal] = useState(false);
@@ -42,8 +43,10 @@ const TeamManagement = () => {
       setEmployees(empRes.data);
       setAllRecords(attRes.data);
       setCorrections(corrRes.data);
+      setError(null);
     } catch (err) {
       console.error(err);
+      setError(err.response?.data?.message || 'Failed to load team data. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -180,7 +183,16 @@ const TeamManagement = () => {
     }, 0)
   };
 
-  if (loading && employees.length === 0) return <div className="p-12 text-center text-slate-500">Loading team data...</div>;
+   if (loading && employees.length === 0) return <div className="p-12 text-center text-slate-500 italic">Loading team data...</div>;
+
+  if (error) return (
+    <div className="p-12 text-center space-y-4">
+      <div className="bg-danger/10 text-danger p-4 rounded-xl border border-danger/20 max-w-md mx-auto font-medium">
+        {error}
+      </div>
+      <button onClick={fetchData} className="btn-primary">Retry Loading</button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
