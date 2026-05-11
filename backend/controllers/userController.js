@@ -236,11 +236,15 @@ export const getFinancialStats = async (req, res) => {
       }
     });
     
+    console.log(`Financial Stats Debug [${month}]: Found ${payrolls.length} payroll records.`);
+
     // Normalize to INR for comparison
     const totalSalary = payrolls.reduce((acc, p) => {
       const amount = p.netSalary || 0;
       const rate = p.exchangeRate || 1;
-      return acc + (amount * rate);
+      const contribution = amount * rate;
+      console.log(` - UserID ${p.userId}: Net ${amount} * Rate ${rate} = ${contribution}`);
+      return acc + contribution;
     }, 0);
 
     // Calculate Total Expenses (Approved only)
