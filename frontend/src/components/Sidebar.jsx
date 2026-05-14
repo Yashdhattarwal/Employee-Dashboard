@@ -48,17 +48,17 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <aside className={clsx(
-      "fixed inset-y-0 left-0 z-50 w-64 bg-secondary text-slate-300 flex flex-col h-full shrink-0 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shadow-2xl lg:shadow-none",
+      "fixed inset-y-0 left-0 z-50 w-64 bg-secondary text-slate-500 flex flex-col h-full shrink-0 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shadow-2xl lg:shadow-none border-r border-slate-200/50",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
-      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-700/50 bg-slate-900/50">
-        <div className="flex items-center gap-2 text-white font-bold text-lg tracking-wide">
+      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200/50 bg-[#0B0C10]">
+        <div className="flex items-center gap-2 text-slate-800 font-bold text-lg tracking-wide">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm">RTN</span>
+            <span className="text-[#090A0D] font-bold text-sm">RTN</span>
           </div>
           RTN Employee
         </div>
-        <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-white transition-colors">
+        <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-primary transition-colors">
           <X size={20} />
         </button>
       </div>
@@ -74,24 +74,24 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               to={item.path}
               onClick={() => setIsOpen(false)}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium text-sm',
                 isActive 
-                  ? 'bg-primary text-white shadow-md shadow-primary/20' 
-                  : 'hover:bg-slate-800 hover:text-white'
+                  ? 'bg-primary text-[#090A0D] shadow-[0_0_15px_rgba(0,240,255,0.2)] font-bold' 
+                  : 'hover:bg-slate-200/20 hover:text-slate-800'
               )}
             >
-              <Icon size={18} className={clsx(isActive ? 'text-white' : 'text-slate-400')} />
+              <Icon size={18} className={clsx(isActive ? 'text-[#090A0D]' : 'text-slate-400 group-hover:text-slate-800')} />
               {item.name}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-700/50">
+      <div className="p-4 border-t border-slate-200/50">
         <Link 
           to="/profile" 
           onClick={() => setIsOpen(false)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-200/20 hover:text-slate-800 transition-colors text-sm font-medium"
         >
           <Settings size={18} className="text-slate-400" />
           Settings
