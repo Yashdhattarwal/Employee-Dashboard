@@ -42,7 +42,11 @@ const Navbar = ({ toggleSidebar }) => {
           </div>
           <div className="relative group">
             <button className="w-9 h-9 md:w-10 md:h-10 bg-slate-100 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all overflow-hidden border border-slate-200">
-              <User size={20} />
+              {user?.profilePhoto ? (
+                <img src={user.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={20} />
+              )}
             </button>
             
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">

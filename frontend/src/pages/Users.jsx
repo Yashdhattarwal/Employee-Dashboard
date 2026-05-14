@@ -10,6 +10,7 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
   const [error, setError] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', role: 'employee', managerId: '',
@@ -40,16 +41,29 @@ const Users = () => {
     e.preventDefault();
     try {
       setError('');
-      if (editingUserId) {
-        // Don't enforce password update unless filled
-        const payload = { ...formData };
-        if (!payload.password) delete payload.password;
-        await axios.put(`/api/users/${editingUserId}`, payload, { withCredentials: true });
-      } else {
-        await axios.post('/api/users', formData, { withCredentials: true });
+      
+      const payloadData = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== '') {
+          if (key === 'password' && editingUserId && !formData[key]) return; // Skip empty password on edit
+          payloadData.append(key, formData[key]);
+        }
+      });
+      if (photoFile) {
+        payloadData.append('profilePhoto', photoFile);
       }
+
+      const headers = { 'Content-Type': 'multipart/form-data' };
+
+      if (editingUserId) {
+        await axios.put(`/api/users/${editingUserId}`, payloadData, { headers, withCredentials: true });
+      } else {
+        await axios.post('/api/users', payloadData, { headers, withCredentials: true });
+      }
+      
       setShowModal(false);
       setEditingUserId(null);
+      setPhotoFile(null);
       setFormData({ name: '', email: '', password: '', role: 'employee', managerId: '',
         salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
         bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
@@ -74,6 +88,7 @@ const Users = () => {
   };
   const handleEditClick = (u) => {
     setEditingUserId(u.id);
+    setPhotoFile(null);
     setFormData({
       name: u.name || '',
       email: u.email || '',
@@ -132,7 +147,18 @@ const Users = () => {
             {users.map(u => (
               <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                 <td className="table-cell font-medium text-slate-500">{u.employeeId}</td>
-                <td className="table-cell font-medium">{u.name}</td>
+                <td className="table-cell font-medium">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                      {u.profilePhoto ? (
+                        <img src={u.profilePhoto} alt={u.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400">{u.name.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    {u.name}
+                  </div>
+                </td>
                 <td className="table-cell text-slate-500">{u.designation || '-'}</td>
                 <td className="table-cell">{u.email}</td>
                 <td className="table-cell capitalize">
@@ -195,6 +221,20 @@ const Users = () => {
             {error && <div className="mb-4 bg-danger/10 text-danger px-4 py-2 rounded-lg text-sm">{error}</div>}
 
             <form onSubmit={handleSaveUser} className="space-y-4">
+              <div className="flex items-center gap-4 mb-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <div className="w-16 h-16 rounded-full bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                   {photoFile ? (
+                     <img src={URL.createObjectURL(photoFile)} alt="Preview" className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-2xl text-slate-300"><UserX size={24} /></span>
+                   )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                  <input type="file" accept="image/*" onChange={e => setPhotoFile(e.target.files[0])} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors" />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Full Name</label>

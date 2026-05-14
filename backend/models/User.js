@@ -93,6 +93,10 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('Full-time', 'Part-time'),
     defaultValue: 'Full-time',
   },
+  profilePhoto: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
 User.belongsTo(User, { as: 'manager', foreignKey: 'managerId' });

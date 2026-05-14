@@ -51,7 +51,8 @@ export const createUser = async (req, res) => {
       shiftTime: shiftTime || '09:00 AM',
       shiftEndTime: shiftEndTime || '06:00 PM',
       designation: designation || null,
-      employmentType: employmentType || 'Full-time'
+      employmentType: employmentType || 'Full-time',
+      profilePhoto: req.file ? `/uploads/profiles/${req.file.filename}` : null
     });
 
     res.status(201).json({
@@ -150,8 +151,34 @@ export const updateUser = async (req, res) => {
       user.password = await bcrypt.hash(password, salt);
     }
 
+    if (req.file) {
+      user.profilePhoto = `/uploads/profiles/${req.file.filename}`;
+    }
+
     await user.save();
     res.json({ ...user.toJSON(), _id: user.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (req.file) {
+      user.profilePhoto = `/uploads/profiles/${req.file.filename}`;
+    }
+
+    await user.save();
+    res.json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePhoto: user.profilePhoto,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
