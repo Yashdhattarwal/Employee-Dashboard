@@ -74,85 +74,87 @@ export const getAllAttendance = async (req, res) => {
   }
 };
 
+const validateAttendanceStatus = async (user, date, checkIn, checkOut, breaks) => {
+  if (!checkIn || !checkOut) return 'Present'; // Status remains as is until checkout
+
+  const workingMinutes = calculateDiffMinutes(checkIn, checkOut);
+  const breakMinutes = (breaks || []).reduce((acc, b) => acc + (b.durationMinutes || 0), 0);
+  const actualWorkMinutes = workingMinutes - breakMinutes;
+
+  const isFullTime = user.employmentType === 'Full-time';
+  const normalMin = isFullTime ? 480 : 240; // 8h or 4h
+  const graceMin = isFullTime ? 450 : 225;  // 7.5h or 3.75h
+
+  // 1. If they hit the normal minimum, they are definitely Present
+  if (actualWorkMinutes >= normalMin) return 'Present';
+
+  // 2. If they are even below the grace period, they are definitely Absent
+  if (actualWorkMinutes < graceMin) return 'Absent';
+
+  // 3. If they are in the Grace Zone (Grace <= Work < Normal), check consecutive days
+  // We need to check the last 3 days before this 'date'
+  const prevRecords = await Attendance.findAll({
+    where: { 
+      userId: user.id, 
+      date: { [Op.lt]: date },
+      status: { [Op.in]: ['Present', 'Checked Out', 'Absent'] } // Include Absent if we want to track working attempts
+    },
+    include: [{ model: Break, as: 'breaks' }],
+    order: [['date', 'DESC']],
+    limit: 3
+  });
+
+  let consecutiveGraceCount = 0;
+  for (const rec of prevRecords) {
+    const recWork = calculateDiffMinutes(rec.checkIn, rec.checkOut) - (rec.breaks || []).reduce((acc, b) => acc + (b.durationMinutes || 0), 0);
+    // If they were in grace zone on a previous day, increment count
+    if (recWork >= graceMin && recWork < normalMin) {
+      consecutiveGraceCount++;
+    } else {
+      // If they hit normal hours, the consecutive chain is broken
+      break;
+    }
+  }
+
+  // Allowed only for 3 consecutive days
+  if (consecutiveGraceCount >= 3) {
+    console.log(`User ${user.id} exceeded 3 consecutive grace days on ${date}. Marking Absent.`);
+    return 'Absent';
+  }
+
+  return 'Present';
+};
+
 export const markAttendance = async (req, res) => {
   try {
     const { userId, date, status, checkIn, checkOut, remarks } = req.body;
-    console.log('Marking Attendance Request:', { userId, date, status });
+    const user = await User.findByPk(userId);
 
-    if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    let finalStatus = status;
+    // Only auto-validate if status is Present or Checked Out
+    if (['Present', 'Checked Out'].includes(status)) {
+       finalStatus = await validateAttendanceStatus(user, date, checkIn, checkOut, []);
     }
 
-    if (req.user.role === 'manager' && userId.toString() === req.user.id.toString()) {
-       return res.status(403).json({ message: 'Managers cannot mark their own attendance via Team Management' });
-    }
-
-    // Use the date string directly if it's already in the correct format
-    // This avoids timezone shifts caused by new Date() parsing
-    const startOfDay = date;
-    console.log('Final Date to save:', startOfDay);
-
-    let attendance = await Attendance.findOne({
-      where: { userId, date: startOfDay }
-    });
-
-    if (status === 'Weekoff') {
-      const [y, m, dayPart] = startOfDay.split('-');
-      const d = new Date(y, m - 1, dayPart);
-      const dayOfWeek = d.getDay();
-      
-      const weekStart = new Date(d);
-      weekStart.setDate(d.getDate() - dayOfWeek);
-      const weekEnd = new Date(d);
-      weekEnd.setDate(d.getDate() + (6 - dayOfWeek));
-
-      const formatYMD = (dateObj) => {
-        const yy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        return `${yy}-${mm}-${dd}`;
-      };
-
-      const startStr = formatYMD(weekStart);
-      const endStr = formatYMD(weekEnd);
-
-      const existingWeekoff = await Attendance.findOne({
-        where: {
-          userId,
-          status: 'Weekoff',
-          date: { [Op.between]: [startStr, endStr] }
-        }
-      });
-
-      if (existingWeekoff && (!attendance || existingWeekoff.id !== attendance.id)) {
-        return res.status(400).json({ message: `A weekoff is already marked for this week (${existingWeekoff.date}).` });
-      }
-    }
+    let attendance = await Attendance.findOne({ where: { userId, date } });
 
     if (attendance) {
-      console.log('Updating existing record:', attendance.id);
-      attendance.status = status;
+      attendance.status = finalStatus;
       attendance.checkIn = checkIn;
       attendance.checkOut = checkOut;
       attendance.remarks = remarks;
       attendance.markedBy = req.user.id;
       await attendance.save();
     } else {
-      console.log('Creating new record for user:', userId);
       attendance = await Attendance.create({
-        userId,
-        markedBy: req.user.id,
-        date: startOfDay,
-        status,
-        checkIn,
-        checkOut,
-        remarks,
+        userId, date, status: finalStatus, checkIn, checkOut, remarks, markedBy: req.user.id
       });
     }
 
     res.json({ ...attendance.toJSON(), _id: attendance.id });
   } catch (error) {
-    console.error('Mark Attendance Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -189,8 +191,12 @@ export const selfAttendanceAction = async (req, res) => {
     } else if (!attendance) {
       return res.status(400).json({ message: 'Must clock in first' });
     } else if (type === 'clock-out') {
+      const user = await User.findByPk(req.user.id);
+      const breaks = await Break.findAll({ where: { attendanceId: attendance.id } });
+      const finalStatus = await validateAttendanceStatus(user, attendance.date, attendance.checkIn, time, breaks);
+
       attendance.checkOut = time;
-      attendance.status = 'Checked Out';
+      attendance.status = finalStatus;
       if (req.body.eodWork) attendance.eodWork = req.body.eodWork;
       if (req.body.pendingTasks) attendance.pendingTasks = req.body.pendingTasks;
       if (req.file) attendance.eodAttachment = `/uploads/eod/${req.file.filename}`;
