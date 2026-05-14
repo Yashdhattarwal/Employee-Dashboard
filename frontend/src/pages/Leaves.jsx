@@ -18,7 +18,7 @@ const Leaves = () => {
       setLoading(true);
       let endpoint = '/api/leaves/my';
       if (user.role === 'admin') endpoint = '/api/leaves/all';
-      else if (user.role === 'manager') endpoint = '/api/leaves/team';
+      else if (user.role === 'manager' || user.role === 'teamlead') endpoint = '/api/leaves/team';
 
       const { data } = await axios.get(endpoint, { withCredentials: true });
       setLeaves(data);
@@ -92,7 +92,7 @@ const Leaves = () => {
                 <th className="table-header">Dates</th>
                 <th className="table-header">Reason</th>
                 <th className="table-header">Status</th>
-                {(user.role === 'admin' || user.role === 'manager') && <th className="table-header">Actions</th>}
+                {(user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') && <th className="table-header">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -119,7 +119,7 @@ const Leaves = () => {
                       {l.status}
                     </span>
                   </td>
-                  {(user.role === 'admin' || user.role === 'manager') && (
+                  {(user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') && (
                     <td className="table-cell">
                       {l.status === 'Pending' && (
                         <div className="flex gap-2">

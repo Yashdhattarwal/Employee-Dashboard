@@ -24,7 +24,8 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get('/api/users', { withCredentials: true });
+      const endpoint = currentUser.role === 'admin' ? '/api/users' : '/api/users/team';
+      const { data } = await axios.get(endpoint, { withCredentials: true });
       setUsers(data);
       // Possible managers can be managers or team leads
       setManagers(data.filter(u => u.role === 'manager' || u.role === 'teamlead'));
@@ -125,8 +126,12 @@ const Users = () => {
   return (
     <div className="space-y-6 relative">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>Add New User</button>
+        <h1 className="text-2xl font-bold text-slate-800">
+          {currentUser?.role === 'admin' ? 'User Management' : 'Team Summary'}
+        </h1>
+        {currentUser?.role === 'admin' && (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>Add New User</button>
+        )}
       </div>
       
       <div className="glass-panel overflow-x-auto custom-scrollbar">
@@ -139,8 +144,8 @@ const Users = () => {
               <th className="table-header">Email</th>
               <th className="table-header">Role</th>
               <th className="table-header">Manager</th>
-              <th className="table-header">Status</th>
-              <th className="table-header text-right">Actions</th>
+              {currentUser?.role === 'admin' && <th className="table-header">Status</th>}
+              {currentUser?.role === 'admin' && <th className="table-header text-right">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -168,34 +173,38 @@ const Users = () => {
                   </span>
                 </td>
                 <td className="table-cell">{u.manager?.name || '-'}</td>
-                <td className="table-cell">
-                  <button 
-                    onClick={() => handleStatusToggle(u.id, u.activeStatus)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all flex items-center gap-1 ${u.activeStatus ? 'bg-success/10 text-success hover:bg-success/20' : 'bg-danger/10 text-danger hover:bg-danger/20'}`}
-                  >
-                    {u.activeStatus ? <UserCheck size={12} /> : <UserX size={12} />}
-                    {u.activeStatus ? 'Active' : 'Inactive'}
-                  </button>
-                </td>
-                <td className="table-cell text-right">
-                  <div className="flex justify-end gap-2">
+                {currentUser?.role === 'admin' && (
+                  <td className="table-cell">
                     <button 
-                      onClick={() => handleEditClick(u)}
-                      className="p-2 text-slate-400 hover:text-primary transition-colors"
-                      title="Edit User"
+                      onClick={() => handleStatusToggle(u.id, u.activeStatus)}
+                      className={`px-3 py-1 text-xs font-medium rounded-full transition-all flex items-center gap-1 ${u.activeStatus ? 'bg-success/10 text-success hover:bg-success/20' : 'bg-danger/10 text-danger hover:bg-danger/20'}`}
                     >
-                      <Pencil size={18} />
+                      {u.activeStatus ? <UserCheck size={12} /> : <UserX size={12} />}
+                      {u.activeStatus ? 'Active' : 'Inactive'}
                     </button>
-                    <button 
-                      onClick={() => handleDelete(u.id)}
-                      disabled={u.id === currentUser.id}
-                      className="p-2 text-slate-400 hover:text-danger disabled:opacity-30 transition-colors"
-                      title="Delete User"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
+                  </td>
+                )}
+                {currentUser?.role === 'admin' && (
+                  <td className="table-cell text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleEditClick(u)}
+                        className="p-2 text-slate-400 hover:text-primary transition-colors"
+                        title="Edit User"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(u.id)}
+                        disabled={u.id === currentUser.id}
+                        className="p-2 text-slate-400 hover:text-danger disabled:opacity-30 transition-colors"
+                        title="Delete User"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {users.length === 0 && (

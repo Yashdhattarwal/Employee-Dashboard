@@ -81,7 +81,7 @@ const TeamManagement = () => {
       let empEndpoint = '/api/users';
       let attEndpoint = '/api/attendance/all';
       
-      if (user.role === 'manager') {
+      if (user.role === 'manager' || user.role === 'teamlead') {
         empEndpoint = '/api/users/team';
         attEndpoint = '/api/attendance/team';
       }
@@ -111,7 +111,7 @@ const TeamManagement = () => {
   const handleSaveRecord = async (e) => {
     e.preventDefault();
     try {
-      if (user.role === 'manager') {
+      if (user.role === 'manager' || user.role === 'teamlead') {
         const payload = { 
           userId: editingId ? formData.userId : selectedEmployee.id, 
           date: formData.date,
@@ -582,7 +582,7 @@ const TeamManagement = () => {
               <X size={20} />
             </button>
             <h2 className="text-xl font-bold text-slate-800 mb-6">
-              {user.role === 'manager' ? 'Request Attendance Correction' : `${editingId ? 'Edit' : 'New'} Record for ${selectedEmployee?.name}`}
+              {(user.role === 'manager' || user.role === 'teamlead') ? 'Request Attendance Correction' : `${editingId ? 'Edit' : 'New'} Record for ${selectedEmployee?.name}`}
             </h2>
             
             <form onSubmit={handleSaveRecord} className="space-y-4">
@@ -593,7 +593,7 @@ const TeamManagement = () => {
                 />
               </div>
 
-              {user.role === 'manager' ? (
+              {(user.role === 'manager' || user.role === 'teamlead') ? (
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Correction Request / Comment</label>
                   <textarea 

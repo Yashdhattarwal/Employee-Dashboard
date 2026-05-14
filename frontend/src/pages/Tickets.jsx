@@ -20,7 +20,7 @@ const Tickets = () => {
       setLoading(true);
       let endpoint = '/api/tickets/my';
       if (user.role === 'admin') endpoint = '/api/tickets/all';
-      else if (user.role === 'manager') endpoint = '/api/tickets/team';
+      else if (user.role === 'manager' || user.role === 'teamlead') endpoint = '/api/tickets/team';
 
       const { data } = await axios.get(endpoint, { withCredentials: true });
       setTickets(data);
@@ -204,7 +204,7 @@ const Tickets = () => {
                   </form>
                 )}
 
-                {(user.role === 'admin' || user.role === 'manager') && selectedTicket.status !== 'Resolved' && (
+                {(user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') && selectedTicket.status !== 'Resolved' && (
                   <div className="flex gap-2">
                     <button 
                       onClick={() => handleStatusUpdate(selectedTicket.id, 'Resolved')}
@@ -213,7 +213,7 @@ const Tickets = () => {
                       <CheckCircle size={14} />
                       Resolve Ticket
                     </button>
-                    {user.role === 'manager' && selectedTicket.status !== 'Escalated' && (
+                    {(user.role === 'manager' || user.role === 'teamlead') && selectedTicket.status !== 'Escalated' && (
                       <button 
                         onClick={() => handleEscalate(selectedTicket.id)}
                         className="flex-1 bg-primary text-white py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2"

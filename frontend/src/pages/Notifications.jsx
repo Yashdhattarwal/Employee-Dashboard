@@ -35,7 +35,7 @@ const Notifications = () => {
   };
 
   const fetchSentNotifications = async () => {
-    if (user.role === 'admin' || user.role === 'manager') {
+    if (user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') {
       try {
         const { data } = await axios.get('/api/notifications/sent', { withCredentials: true });
         setSentNotifications(data);
@@ -46,7 +46,7 @@ const Notifications = () => {
   };
 
   const fetchEmployees = async () => {
-    if (user.role === 'admin' || user.role === 'manager') {
+    if (user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') {
       try {
         const endpoint = user.role === 'admin' ? '/api/users' : '/api/users/team';
         const { data } = await axios.get(endpoint, { withCredentials: true });
@@ -110,7 +110,7 @@ const Notifications = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-800">Notifications</h1>
-        {(user.role === 'admin' || user.role === 'manager') && (
+        {(user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') && (
           <button 
             onClick={() => setShowSendModal(true)}
             className="btn-primary flex items-center gap-2"
@@ -121,7 +121,7 @@ const Notifications = () => {
         )}
       </div>
 
-      {(user.role === 'admin' || user.role === 'manager') && (
+      {(user.role === 'admin' || user.role === 'manager' || user.role === 'teamlead') && (
         <div className="flex gap-4 border-b border-slate-200">
           <button 
             onClick={() => setActiveTab('inbox')}
