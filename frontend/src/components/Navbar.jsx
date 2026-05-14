@@ -3,16 +3,24 @@ import { AuthContext } from '../context/AuthContext';
 import { Bell, Search, Menu, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = ({ toggleSidebar }) => {
+const Navbar = ({ toggleSidebar, toggleCollapse, isCollapsed }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
       <div className="flex items-center gap-4">
+        {/* Mobile menu toggle */}
         <button 
           onClick={toggleSidebar}
           className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+        {/* Desktop sidebar collapse toggle */}
+        <button 
+          onClick={toggleCollapse}
+          className="hidden lg:block p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
         >
           <Menu size={20} />
         </button>

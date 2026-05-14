@@ -5,6 +5,15 @@ import Navbar from './Navbar';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
+    localStorage.getItem('sidebar-collapsed') === 'true'
+  );
+
+  const toggleCollapse = () => {
+    const newState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newState);
+    localStorage.setItem('sidebar-collapsed', newState);
+  };
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden relative">
@@ -16,10 +25,18 @@ const Layout = () => {
         />
       )}
 
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        setIsOpen={setIsSidebarOpen} 
+        isCollapsed={isSidebarCollapsed} 
+      />
       
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <Navbar 
+          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+          toggleCollapse={toggleCollapse}
+          isCollapsed={isSidebarCollapsed}
+        />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
           <Outlet />
         </main>
