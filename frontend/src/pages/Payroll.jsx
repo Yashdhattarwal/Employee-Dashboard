@@ -263,6 +263,14 @@ const Payroll = () => {
             >
               Expenses
             </button>
+            {isAdmin && (
+              <button 
+                onClick={() => setActiveTab('absent')}
+                className={`px-4 py-1.5 rounded-md text-sm font-semibold transition ${activeTab === 'absent' ? 'bg-white shadow text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Absent Records
+              </button>
+            )}
           </div>
         </div>
 
@@ -639,6 +647,54 @@ const Payroll = () => {
                 <button type="submit" className="btn-primary bg-rose-600 hover:bg-rose-700 border-none flex-1">Reject Claim</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Absent Stats Tab */}
+      {isAdmin && activeTab === 'absent' && (
+        <div className="glass-panel overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-slate-800">Monthly Absence Summary</h2>
+            <div className="text-sm text-slate-500">Showing for {month}</div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="table-header">Employee</th>
+                  <th className="table-header">Emp ID</th>
+                  <th className="table-header text-center">Absent Days</th>
+                  <th className="table-header">Dates</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {payrolls.map(p => (
+                  <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="table-cell font-medium">{p.user?.name}</td>
+                    <td className="table-cell text-slate-500">{p.user?.employeeId}</td>
+                    <td className="table-cell text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.absentDates?.length > 0 ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                        {p.absentDates?.length || 0}
+                      </span>
+                    </td>
+                    <td className="table-cell max-w-xs">
+                      <div className="flex flex-wrap gap-1">
+                        {p.absentDates?.length > 0 ? p.absentDates.map((d, i) => (
+                          <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                            {new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          </span>
+                        )) : <span className="text-slate-400 italic text-sm">No absences recorded</span>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {payrolls.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="text-center py-12 text-slate-400 italic">No payroll data generated yet for this month</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
