@@ -1,4 +1,4 @@
-import { useContext, useState, useRef } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { Camera, Upload, User as UserIcon } from 'lucide-react';
@@ -8,7 +8,15 @@ const Settings = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('app-theme') || 'dark');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('app-theme', theme);
+  }, [theme]);
 
   const handlePhotoUpload = async () => {
     if (!file) return;
@@ -32,6 +40,25 @@ const Settings = () => {
       setMessage(err.response?.data?.message || 'Failed to upload photo');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!password || password.length < 6) {
+      setMessage('Password must be at least 6 characters long');
+      return;
+    }
+    setPasswordUpdating(true);
+    setMessage('');
+    
+    try {
+      await axios.put('/api/users/profile', { password }, { withCredentials: true });
+      setMessage('Password updated successfully!');
+      setPassword('');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Failed to update password');
+    } finally {
+      setPasswordUpdating(false);
     }
   };
 
@@ -126,22 +153,42 @@ const Settings = () => {
         </div>
 
         <div className="mt-8 border-t border-slate-200 pt-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">Application Theme</h3>
+              <p className="text-sm text-slate-500">Toggle between Light and Dark mode</p>
+            </div>
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-slate-300'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-slate-200 pt-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-4">Change Password</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Current Password</label>
-              <div className="mt-1">
-                <input type="password" placeholder="••••••••" className="input-field" disabled />
-              </div>
-            </div>
-            <div>
               <label className="block text-sm font-medium text-slate-700">New Password</label>
               <div className="mt-1">
-                <input type="password" placeholder="••••••••" className="input-field" disabled />
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  className="input-field" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
             </div>
-            <button disabled className="btn-primary mt-2 opacity-50 cursor-not-allowed">Update Password</button>
-            <p className="text-xs text-slate-500">Password updates are currently handled by Administrator.</p>
+            <button 
+              onClick={handlePasswordUpdate}
+              disabled={passwordUpdating || !password} 
+              className="btn-primary mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {passwordUpdating ? 'Updating...' : 'Update Password'}
+            </button>
           </div>
         </div>
       </div>

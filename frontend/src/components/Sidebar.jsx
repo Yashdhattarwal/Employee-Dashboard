@@ -51,10 +51,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       "fixed inset-y-0 left-0 z-50 w-64 bg-secondary text-slate-500 flex flex-col h-full shrink-0 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 shadow-2xl lg:shadow-none border-r border-slate-200/50",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
-      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200/50 bg-[#0B0C10]">
+      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200/50 bg-secondary">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-lg tracking-wide">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-[#090A0D] font-bold text-sm">RTN</span>
+            <span className="text-white font-bold text-sm">RTN</span>
           </div>
           RTN Employee
         </div>
@@ -76,11 +76,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               className={clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium text-sm',
                 isActive 
-                  ? 'bg-primary text-[#090A0D] shadow-[0_0_15px_rgba(0,240,255,0.2)] font-bold' 
+                  ? 'bg-primary text-white shadow-[0_0_15px_rgba(229,0,255,0.2)] font-bold' 
                   : 'hover:bg-slate-200/20 hover:text-slate-800'
               )}
             >
-              <Icon size={18} className={clsx(isActive ? 'text-[#090A0D]' : 'text-slate-400 group-hover:text-slate-800')} />
+              <Icon size={18} className={clsx(isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-800')} />
               {item.name}
             </Link>
           );

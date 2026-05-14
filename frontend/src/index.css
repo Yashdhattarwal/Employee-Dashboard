@@ -4,38 +4,104 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary: 229 0 255;
+  --color-secondary: 15 23 42;
+  --color-success: 16 185 129;
+  --color-warning: 245 158 11;
+  --color-danger: 239 68 68;
+  --color-white: 255 255 255;
+  --color-slate-50: 248 250 252;
+  --color-slate-100: 241 245 249;
+  --color-slate-200: 226 232 240;
+  --color-slate-300: 203 213 225;
+  --color-slate-400: 148 163 184;
+  --color-slate-500: 100 116 139;
+  --color-slate-600: 71 85 105;
+  --color-slate-700: 51 65 85;
+  --color-slate-800: 30 41 59;
+  --color-slate-900: 15 23 42;
+  
+  --bg-body: #f8fafc;
+  --bg-gradient: none;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(226, 232, 240, 1);
+  --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --btn-text: #ffffff;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-hover: #E500FF;
+}
+
+[data-theme="dark"] {
+  --color-primary: 229 0 255;
+  --color-secondary: 11 12 16;
+  --color-success: 0 230 118;
+  --color-warning: 255 213 79;
+  --color-danger: 255 23 68;
+  --color-white: 22 25 33;
+  --color-slate-50: 9 10 13;
+  --color-slate-100: 17 19 24;
+  --color-slate-200: 26 29 36;
+  --color-slate-300: 37 42 52;
+  --color-slate-400: 100 116 139;
+  --color-slate-500: 148 163 184;
+  --color-slate-600: 203 213 225;
+  --color-slate-700: 226 232 240;
+  --color-slate-800: 248 250 252;
+  --color-slate-900: 255 255 255;
+
+  --bg-body: #090A0D;
+  --bg-gradient: radial-gradient(circle at top right, #111318, #090A0D 70%);
+  --glass-bg: rgba(17, 19, 24, 0.7);
+  --glass-border: rgba(37, 42, 52, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --btn-text: #090A0D;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #252A34;
+  --scrollbar-hover: #E500FF;
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-800 font-sans;
     font-family: 'Outfit', sans-serif;
-    background: radial-gradient(circle at top right, #111318, #090A0D 70%);
+    background: var(--bg-gradient, var(--bg-body));
     background-attachment: fixed;
+    transition: background 0.3s ease;
   }
   
-  /* Make standard scrollbars look good in dark mode */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: transparent; 
+    background: var(--scrollbar-track); 
   }
   ::-webkit-scrollbar-thumb {
-    background: #252A34; 
+    background: var(--scrollbar-thumb); 
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #00F0FF; 
+    background: var(--scrollbar-hover); 
   }
 }
 
 .glass-panel {
-  @apply bg-[#111318]/70 backdrop-blur-xl border border-slate-200/50 shadow-2xl rounded-2xl;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
 }
 
 .btn-primary {
-  @apply px-4 py-2 bg-primary text-[#090A0D] rounded-xl hover:bg-[#33FFFF] hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all duration-300 font-bold border border-primary;
+  @apply px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/80 transition-all duration-300 font-bold border border-primary;
+  color: var(--btn-text);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  box-shadow: 0 0 15px rgba(229, 0, 255, 0.4);
 }
 
 .btn-secondary {
