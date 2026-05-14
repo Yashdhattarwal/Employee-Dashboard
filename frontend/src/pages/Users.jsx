@@ -25,7 +25,8 @@ const Users = () => {
     try {
       const { data } = await axios.get('/api/users', { withCredentials: true });
       setUsers(data);
-      setManagers(data.filter(u => u.role === 'manager'));
+      // Possible managers can be managers or team leads
+      setManagers(data.filter(u => u.role === 'manager' || u.role === 'teamlead'));
     } catch (err) {
       console.error(err);
     }
@@ -293,6 +294,7 @@ const Users = () => {
                     value={formData.role} onChange={e => setFormData({...formData, role: e.target.value, managerId: ''})}
                   >
                     <option value="employee">Employee</option>
+                    <option value="teamlead">Team Lead</option>
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
@@ -323,15 +325,20 @@ const Users = () => {
                   </select>
                 </div>
                 
-                {formData.role === 'employee' && (
+                {(formData.role === 'employee' || formData.role === 'teamlead') && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Assign Manager</label>
+                    <label className="block text-sm font-medium text-slate-700">Assign {formData.role === 'teamlead' ? 'Manager' : 'Supervisor'}</label>
                     <select required className="input-field mt-1" 
                       value={formData.managerId} onChange={e => setFormData({...formData, managerId: e.target.value})}
                     >
-                      <option value="">Select Manager</option>
-                      {managers.map(m => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.employeeId})</option>
+                      <option value="">Select {formData.role === 'teamlead' ? 'Manager' : 'Supervisor'}</option>
+                      {managers
+                        .filter(m => {
+                          if (formData.role === 'teamlead') return m.role === 'manager';
+                          return true; // Employees can report to anyone in managers list (Manager/TL)
+                        })
+                        .map(m => (
+                        <option key={m.id} value={m.id}>{m.name} ({m.employeeId}) - {m.role.toUpperCase()}</option>
                       ))}
                     </select>
                   </div>

@@ -35,7 +35,7 @@ const RoleBasedRoute = () => {
   if (!user) return <Navigate to="/login" replace />;
 
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  if (user.role === 'manager') return <Navigate to="/manager" replace />;
+  if (user.role === 'manager' || user.role === 'teamlead') return <Navigate to="/manager" replace />;
   return <Navigate to="/employee" replace />;
 };
 
@@ -58,15 +58,15 @@ function App() {
           <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><Users /></ProtectedRoute>} />
           <Route path="/admin/payroll" element={<ProtectedRoute allowedRoles={['admin']}><Payroll /></ProtectedRoute>} />
 
-          {/* Manager Routes */}
-          <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
-          <Route path="/manager/attendance" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Attendance /></ProtectedRoute>} />
-          <Route path="/manager/team-attendance" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><TeamAttendance /></ProtectedRoute>} />
-          <Route path="/manager/leaves" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Leaves /></ProtectedRoute>} />
-          <Route path="/manager/notifications" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Notifications /></ProtectedRoute>} />
-          <Route path="/manager/tickets" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Tickets /></ProtectedRoute>} />
-          <Route path="/manager/team" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Users /></ProtectedRoute>} />
-          <Route path="/manager/payroll" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><Payroll /></ProtectedRoute>} />
+          {/* Manager & Team Lead Routes */}
+          <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><ManagerDashboard /></ProtectedRoute>} />
+          <Route path="/manager/attendance" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><Attendance /></ProtectedRoute>} />
+          <Route path="/manager/team-attendance" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><TeamAttendance /></ProtectedRoute>} />
+          <Route path="/manager/leaves" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><Leaves /></ProtectedRoute>} />
+          <Route path="/manager/notifications" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><Notifications /></ProtectedRoute>} />
+          <Route path="/manager/tickets" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><Tickets /></ProtectedRoute>} />
+          <Route path="/manager/team" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><Users /></ProtectedRoute>} />
+          <Route path="/manager/payroll" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'teamlead']}><Payroll /></ProtectedRoute>} />
 
           {/* General Routes */}
           <Route path="/profile" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

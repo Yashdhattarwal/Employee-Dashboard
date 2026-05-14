@@ -176,7 +176,7 @@ export const getDashboardStats = async (req, res) => {
     let totalStaff, presentToday, onLeave, pendingTickets;
 
     if (isAdmin) {
-      totalStaff = await User.count({ where: { role: { [Op.or]: ['employee', 'manager'] } } });
+      totalStaff = await User.count({ where: { role: { [Op.or]: ['employee', 'manager', 'teamlead'] } } });
       presentToday = await Attendance.count({ where: { date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } } });
       onLeave = await Attendance.count({ where: { date: today, status: 'On Leave' } });
       pendingTickets = await Ticket.count({ where: { status: { [Op.not]: 'Resolved' } } });

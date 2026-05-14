@@ -11,7 +11,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const getNavItems = () => {
     let base = 'employee';
     if (user?.role === 'admin') base = 'admin';
-    else if (user?.role === 'manager') base = 'manager';
+    else if (user?.role === 'manager' || user?.role === 'teamlead') base = 'manager';
 
     const items = [
       { name: 'Dashboard', path: `/${base}`, icon: LayoutDashboard },
@@ -23,7 +23,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     items.push({ name: 'Payroll', path: `/${base}/payroll`, icon: DollarSign });
 
-    if (user?.role === 'admin' || user?.role === 'manager') {
+    if (user?.role === 'admin' || user?.role === 'manager' || user?.role === 'teamlead') {
       items.push({ name: 'Team Attendance', path: `/${base}/team-attendance`, icon: Users });
     }
 
@@ -37,7 +37,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       items.push({ name: 'User Management', path: `/${base}/users`, icon: Users });
     }
 
-    if (user?.role === 'manager') {
+    if (user?.role === 'manager' || user?.role === 'teamlead') {
       items.push({ name: 'Team Summary', path: `/${base}/team`, icon: Users });
     }
 
