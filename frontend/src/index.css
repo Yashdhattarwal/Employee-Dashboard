@@ -1,33 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-slate-50 text-slate-800 font-sans;
+    font-family: 'Outfit', sans-serif;
+    background: radial-gradient(circle at top right, #111318, #090A0D 70%);
+    background-attachment: fixed;
+  }
+  
+  /* Make standard scrollbars look good in dark mode */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #252A34; 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00F0FF; 
   }
 }
 
 .glass-panel {
-  @apply bg-white bg-opacity-80 backdrop-blur-lg border border-slate-200 shadow-sm rounded-xl;
+  @apply bg-[#111318]/70 backdrop-blur-xl border border-slate-200/50 shadow-2xl rounded-2xl;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 .btn-primary {
-  @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm hover:shadow-md;
+  @apply px-4 py-2 bg-primary text-[#090A0D] rounded-xl hover:bg-[#33FFFF] hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all duration-300 font-bold border border-primary;
 }
 
 .btn-secondary {
-  @apply px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium shadow-sm;
+  @apply px-4 py-2 bg-slate-200/20 text-slate-700 rounded-xl hover:bg-slate-200/40 transition-all font-medium border border-slate-200;
 }
 
 .input-field {
-  @apply w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none bg-white;
+  @apply w-full px-4 py-2 border border-slate-300/50 bg-slate-100 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-slate-900 placeholder-slate-500;
 }
 
 .table-header {
-  @apply bg-slate-50 text-slate-500 font-medium text-left px-6 py-3 border-b border-slate-200;
+  @apply bg-slate-100/50 text-slate-400 font-bold text-left px-6 py-4 border-b border-slate-200 uppercase tracking-wider text-xs;
 }
 
 .table-cell {
-  @apply px-6 py-4 border-b border-slate-100 text-slate-700;
+  @apply px-6 py-4 border-b border-slate-200/50 text-slate-700 bg-transparent;
 }

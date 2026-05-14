@@ -6,12 +6,28 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+      },
       colors: {
-        primary: '#2563EB',
-        secondary: '#0F172A',
-        success: '#10B981',
-        warning: '#F59E0B',
-        danger: '#EF4444',
+        primary: '#00F0FF',
+        secondary: '#0B0C10',
+        success: '#00E676',
+        warning: '#FFD54F',
+        danger: '#FF1744',
+        white: '#161921',
+        slate: {
+          50: '#090A0D',
+          100: '#111318',
+          200: '#1A1D24',
+          300: '#252A34',
+          400: '#64748B',
+          500: '#94A3B8',
+          600: '#CBD5E1',
+          700: '#E2E8F0',
+          800: '#F8FAFC',
+          900: '#FFFFFF',
+        }
       }
     },
   },
