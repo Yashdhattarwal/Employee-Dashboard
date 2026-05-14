@@ -52,10 +52,10 @@
   --color-slate-900: 248 250 252; /* Slate-50 */
 
   --bg-body: #0a0f1e;
-  --bg-gradient: radial-gradient(circle at top right, #1e293b, #0a0f1e 80%);
-  --glass-bg: rgba(15, 23, 42, 0.6); /* Translucent Navy */
-  --glass-border: rgba(234, 195, 110, 0.15); /* Soft Gold Border */
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --bg-gradient: radial-gradient(circle at top left, rgba(234, 195, 110, 0.05), transparent 40%), radial-gradient(circle at top right, #1e293b, #0a0f1e 80%);
+  --glass-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.6) 100%);
+  --glass-border: rgba(234, 195, 110, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(234, 195, 110, 0.05);
   --btn-text: #0a0f1e;
   --scrollbar-track: transparent;
   --scrollbar-thumb: rgba(234, 195, 110, 0.3);
@@ -88,7 +88,7 @@
 }
 
 .glass-panel {
-  background-color: var(--glass-bg);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -103,13 +103,31 @@
 [data-theme="dark"] .btn-primary {
   background: linear-gradient(135deg, rgba(234, 195, 110, 1) 0%, rgba(193, 155, 76, 1) 100%);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 15px rgba(234, 195, 110, 0.2);
+  box-shadow: 0 4px 20px rgba(234, 195, 110, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   color: #0a0f1e;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 [data-theme="dark"] .btn-primary:hover {
-  box-shadow: 0 0 20px rgba(234, 195, 110, 0.5);
+  box-shadow: 0 0 25px rgba(234, 195, 110, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transform: translateY(-1px);
+}
+
+/* Make Recharts line and area charts glow with the gold color in dark mode */
+[data-theme="dark"] .recharts-line-curve,
+[data-theme="dark"] .recharts-area-curve {
+  stroke: #EAC36E !important;
+  filter: drop-shadow(0 4px 6px rgba(234, 195, 110, 0.4));
+}
+[data-theme="dark"] .recharts-area-area {
+  fill: url(#colorUv) !important; /* Will need to define a gold gradient in the chart if possible, or fallback to CSS fill */
+  fill: rgba(234, 195, 110, 0.1) !important;
+}
+[data-theme="dark"] .recharts-pie-sector path[fill="#3b82f6"] {
+  fill: #EAC36E !important;
+}
+[data-theme="dark"] .recharts-pie-sector path[fill="#8b5cf6"] {
+  fill: rgba(234, 195, 110, 0.5) !important;
 }
 
 .btn-secondary {
