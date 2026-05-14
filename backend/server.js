@@ -98,6 +98,18 @@ Expense.belongsTo(User, { foreignKey: 'userId' });
 const startServer = async () => {
   await connectDB();
   
+  // Safe automated migration for production
+  try {
+    const sequelize = (await import('./config/db.js')).default;
+    await sequelize.query('ALTER TABLE Users ADD COLUMN profilePhoto VARCHAR(255);');
+    console.log('Successfully added profilePhoto column to Users table.');
+  } catch (error) {
+    // Error expected if column already exists
+    if (!error.message.includes('Duplicate column name')) {
+      console.error('Migration notice:', error.message);
+    }
+  }
+
   const PORT = process.env.PORT || 5000;
 
   app.listen(PORT, async () => {
