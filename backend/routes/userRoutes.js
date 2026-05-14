@@ -3,10 +3,20 @@ import multer from 'multer';
 import path from 'path';
 import { createUser, getUsers, getTeamMembers, updateUserStatus, updateUser, updateProfile, getDashboardStats, getFinancialStats, deleteUser } from '../controllers/userController.js';
 import { protect, admin, manager } from '../middleware/authMiddleware.js';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadDir = path.join(__dirname, '../uploads/profiles');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/profiles/');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(null, `profile-${req.user ? req.user.id : Date.now()}-${Date.now()}${path.extname(file.originalname)}`);
