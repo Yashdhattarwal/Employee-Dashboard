@@ -327,8 +327,12 @@ const TeamManagement = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                    <User size={24} />
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors overflow-hidden shrink-0 border border-slate-200">
+                    {emp.profilePhoto ? (
+                      <img src={emp.profilePhoto} alt={emp.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={24} />
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">{emp.name}</h3>
@@ -366,8 +370,12 @@ const TeamManagement = () => {
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
           {/* Employee Info Card */}
           <div className="glass-panel p-6 flex flex-col md:flex-row gap-6 items-start md:items-center">
-            <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-              <User size={40} />
+            <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center text-primary overflow-hidden shrink-0 border-2 border-primary/20 shadow-sm">
+              {selectedEmployee.profilePhoto ? (
+                <img src={selectedEmployee.profilePhoto} alt={selectedEmployee.name} className="w-full h-full object-cover" />
+              ) : (
+                <User size={40} />
+              )}
             </div>
             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
