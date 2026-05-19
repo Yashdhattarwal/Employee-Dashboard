@@ -196,11 +196,7 @@ const Payroll = () => {
       doc.text(`Month: ${p.month}`, 14, 53);
       doc.text(`Present Days: ${p.presentDays}`, 14, 61);
       
-      const currencySymbol = p.currency === 'USD' ? '$' : 'Rs.';
-      
-      const absentDesc = p.absentDates && p.absentDates.length > 0 
-        ? `\nDeduction for Absent Dates:\n(${p.absentDates.join(', ')})`
-        : '';
+      const currencySymbol = p.currency === 'USD' ? '$' : 'INR';
 
       autoTable(doc, {
         startY: 70,
@@ -209,7 +205,7 @@ const Payroll = () => {
           ['Base Salary', `${currencySymbol} ${p.baseSalary?.toFixed(2)}`],
           ['Bonus', `+ ${currencySymbol} ${(p.bonus || 0).toFixed(2)}`],
           ['Overtime', `+ ${currencySymbol} ${(p.overtime || 0).toFixed(2)}`],
-          [`Deductions ${absentDesc}`, `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
+          ['Deductions', `- ${currencySymbol} ${(p.deductions || 0).toFixed(2)}`],
         ],
         foot: [
           ['Net Salary', `${currencySymbol} ${p.netSalary?.toFixed(2)}`]
