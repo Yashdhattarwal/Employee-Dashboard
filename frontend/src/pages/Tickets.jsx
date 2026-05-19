@@ -141,10 +141,10 @@ const Tickets = () => {
           ) : (
             tickets.map((t) => (
               <div 
-                key={t._id} 
+                key={t.id || t._id} 
                 onClick={() => setSelectedTicket(t)}
                 className={`glass-panel p-5 cursor-pointer transition-all border-2 ${
-                  selectedTicket?._id === t._id ? 'border-primary' : 'border-transparent hover:border-slate-200'
+                  (selectedTicket?.id === t.id || selectedTicket?._id === t._id) ? 'border-primary' : 'border-transparent hover:border-slate-200'
                 }`}
               >
                 <div className="flex justify-between items-start mb-3">
