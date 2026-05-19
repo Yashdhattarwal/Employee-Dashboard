@@ -134,11 +134,12 @@ const Tickets = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-1 space-y-4 max-h-[calc(100vh-10rem)] overflow-y-auto pr-1 custom-scrollbar">
-          {loading ? (
-            <div className="glass-panel p-12 text-center text-slate-500">Loading tickets...</div>
-          ) : (
+      <div className="grid grid-cols-1 gap-6">
+        {!selectedTicket ? (
+          <div className="space-y-4 max-h-[calc(100vh-10rem)] overflow-y-auto pr-1 custom-scrollbar">
+            {loading ? (
+              <div className="glass-panel p-12 text-center text-slate-500">Loading tickets...</div>
+            ) : (
             tickets.map((t) => (
               <div 
                 key={t.id || t._id} 
@@ -192,28 +193,32 @@ const Tickets = () => {
           {!loading && tickets.length === 0 && (
             <div className="glass-panel p-12 text-center text-slate-400">No tickets found.</div>
           )}
-        </div>
-
-        <div className="xl:col-span-2 space-y-6">
-          {selectedTicket ? (
-            <div className="glass-panel p-6 sticky top-6 animate-in slide-in-from-right-4 duration-300 flex flex-col h-[calc(100vh-10rem)]">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                   <div className="flex gap-2">
-                     <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">Ticket #{selectedTicket.id}</span>
-                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                        selectedTicket.priority === 'High' ? 'bg-danger/10 text-danger' : 
-                        selectedTicket.priority === 'Medium' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
-                      }`}>{selectedTicket.priority} Priority</span>
-                   </div>
-                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    selectedTicket.status === 'Resolved' ? 'bg-success/10 text-success' :
-                    selectedTicket.status === 'Escalated' ? 'bg-primary/10 text-primary' :
-                    'bg-warning/10 text-warning'
-                  }`}>
-                    {selectedTicket.status}
-                  </span>
+          </div>
+        ) : (
+          <div className="glass-panel p-6 sticky top-6 animate-in slide-in-from-bottom-4 duration-300 flex flex-col h-[calc(100vh-10rem)] w-full">
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <button 
+                  onClick={() => setSelectedTicket(null)}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-all"
+                >
+                  ← Back to Tickets
+                </button>
+                <div className="flex gap-2">
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">Ticket #{selectedTicket.id}</span>
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                     selectedTicket.priority === 'High' ? 'bg-danger/10 text-danger' : 
+                     selectedTicket.priority === 'Medium' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+                   }`}>{selectedTicket.priority} Priority</span>
                 </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  selectedTicket.status === 'Resolved' ? 'bg-success/10 text-success' :
+                  selectedTicket.status === 'Escalated' ? 'bg-primary/10 text-primary' :
+                  'bg-warning/10 text-warning'
+                }`}>
+                  {selectedTicket.status}
+                </span>
+              </div>
                 <h2 className="text-xl font-bold text-slate-800 mb-1">{selectedTicket.subject}</h2>
                 <div className="text-xs text-slate-400 mb-3 space-y-1">
                   <p className="flex items-center gap-1">
@@ -299,18 +304,8 @@ const Tickets = () => {
                 )}
               </div>
             </div>
-          ) : (
-            <div className="glass-panel p-12 text-center text-slate-400 border-dashed border-2 flex flex-col items-center justify-center h-[calc(100vh-10rem)] gap-4">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
-                <MessageSquare size={32} className="text-slate-300" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800">No Ticket Selected</p>
-                <p className="text-xs max-w-[200px] mx-auto mt-1">Select a ticket from the list to view the full audit trail and chat history.</p>
-              </div>
-            </div>
-          )}
-        </div>
+          )
+        )}
       </div>
 
       {showModal && (
