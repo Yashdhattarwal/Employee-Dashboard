@@ -38,13 +38,6 @@ export const getMyTickets = async (req, res) => {
   try {
     const userIdStr = String(req.user.id);
     const tickets = await Ticket.findAll({ 
-      where: {
-        [Op.or]: [
-          { userId: req.user.id },
-          { assignedTo: req.user.id },
-          { cc: { [Op.like]: `%${userIdStr}%` } }
-        ]
-      },
       include: [
         { model: User, as: 'user', attributes: ['name', 'email'] },
         { model: User, as: 'assignee', attributes: ['name', 'email'] },
@@ -52,7 +45,19 @@ export const getMyTickets = async (req, res) => {
       ],
       order: [['createdAt', 'DESC']]
     });
-    const mapped = tickets.map(t => ({ ...t.toJSON(), _id: t.id }));
+
+    // Highly robust JavaScript filtering to handle SQLite/Postgres CC lists cleanly
+    const filtered = tickets.filter(t => {
+      if (t.userId === req.user.id) return true;
+      if (t.assignedTo === req.user.id) return true;
+      if (t.cc) {
+        const ccIds = t.cc.split(',').map(s => s.trim());
+        if (ccIds.includes(userIdStr)) return true;
+      }
+      return false;
+    });
+
+    const mapped = filtered.map(t => ({ ...t.toJSON(), _id: t.id }));
     res.json(mapped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -66,19 +71,7 @@ export const getTeamTickets = async (req, res) => {
     const subordinateIds = subordinates.map(u => u.id);
 
     const tickets = await Ticket.findAll({ 
-      where: {
-        [Op.and]: [
-          {
-            [Op.or]: [
-              { userId: req.user.id },
-              { assignedTo: req.user.id },
-              { userId: { [Op.in]: subordinateIds } },
-              { cc: { [Op.like]: `%${userIdStr}%` } }
-            ]
-          },
-          { hiddenFromManager: false }
-        ]
-      },
+      where: { hiddenFromManager: false },
       include: [
         { model: User, as: 'user', attributes: ['name', 'email'] },
         { model: User, as: 'assignee', attributes: ['name', 'email'] },
@@ -86,7 +79,20 @@ export const getTeamTickets = async (req, res) => {
       ],
       order: [['createdAt', 'DESC']]
     });
-    const mapped = tickets.map(t => ({ ...t.toJSON(), _id: t.id }));
+
+    // Highly robust JavaScript filtering for managers & TLs with full CC visibility
+    const filtered = tickets.filter(t => {
+      if (t.assignedTo === req.user.id) return true;
+      if (t.userId === req.user.id) return true;
+      if (subordinateIds.includes(t.userId)) return true;
+      if (t.cc) {
+        const ccIds = t.cc.split(',').map(s => s.trim());
+        if (ccIds.includes(userIdStr)) return true;
+      }
+      return false;
+    });
+
+    const mapped = filtered.map(t => ({ ...t.toJSON(), _id: t.id }));
     res.json(mapped);
   } catch (error) {
     res.status(500).json({ message: error.message });
