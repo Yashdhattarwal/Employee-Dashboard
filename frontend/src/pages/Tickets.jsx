@@ -135,7 +135,7 @@ const Tickets = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-4">
+        <div className="xl:col-span-1 space-y-4 max-h-[calc(100vh-10rem)] overflow-y-auto pr-1 custom-scrollbar">
           {loading ? (
             <div className="glass-panel p-12 text-center text-slate-500">Loading tickets...</div>
           ) : (
@@ -194,9 +194,9 @@ const Tickets = () => {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           {selectedTicket ? (
-            <div className="glass-panel p-6 sticky top-6 animate-in slide-in-from-right-4 duration-300 flex flex-col h-[calc(100vh-12rem)]">
+            <div className="glass-panel p-6 sticky top-6 animate-in slide-in-from-right-4 duration-300 flex flex-col h-[calc(100vh-10rem)]">
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                    <div className="flex gap-2">
@@ -300,7 +300,7 @@ const Tickets = () => {
               </div>
             </div>
           ) : (
-            <div className="glass-panel p-12 text-center text-slate-400 border-dashed border-2 flex flex-col items-center justify-center h-[calc(100vh-12rem)] gap-4">
+            <div className="glass-panel p-12 text-center text-slate-400 border-dashed border-2 flex flex-col items-center justify-center h-[calc(100vh-10rem)] gap-4">
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                 <MessageSquare size={32} className="text-slate-300" />
               </div>
