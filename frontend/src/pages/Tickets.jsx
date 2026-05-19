@@ -304,8 +304,7 @@ const Tickets = () => {
                 )}
               </div>
             </div>
-          )
-        )}
+          )}
       </div>
 
       {showModal && (
