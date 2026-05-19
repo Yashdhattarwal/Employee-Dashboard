@@ -283,11 +283,11 @@ const TeamManagement = () => {
         
         {!selectedEmployee && (
           <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-700/50 px-3 py-1.5 rounded-lg shadow-inner">
               <span className="text-xs font-bold text-slate-400 uppercase">Month:</span>
               <input 
                 type="month" 
-                className="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer"
+                className="bg-transparent border-none text-sm font-bold text-white focus:ring-0 cursor-pointer [color-scheme:dark]"
                 value={filterMonth}
                 onChange={(e) => setFilterMonth(e.target.value)}
               />
@@ -436,11 +436,11 @@ const TeamManagement = () => {
                 <Calendar size={20} className="text-primary" />
                 Attendance History
               </h2>
-              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+              <div className="flex items-center gap-2 bg-slate-900 border border-slate-700/50 px-3 py-1.5 rounded-lg shadow-inner">
                 <span className="text-xs font-bold text-slate-400 uppercase">Filter Month:</span>
                 <input 
                   type="month" 
-                  className="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer"
+                  className="bg-transparent border-none text-sm font-bold text-white focus:ring-0 cursor-pointer [color-scheme:dark]"
                   value={filterMonth}
                   onChange={(e) => setFilterMonth(e.target.value)}
                 />
