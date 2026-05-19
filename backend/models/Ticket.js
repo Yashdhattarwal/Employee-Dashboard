@@ -32,6 +32,10 @@ const Ticket = sequelize.define('Ticket', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  cc: {
+    type: DataTypes.TEXT, // Comma-separated user IDs of CC'ed users, e.g. "2,3,4"
+    allowNull: true,
+  },
   hiddenFromManager: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

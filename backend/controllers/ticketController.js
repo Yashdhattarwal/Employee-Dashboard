@@ -4,12 +4,25 @@ import { Op } from 'sequelize';
 
 export const createTicket = async (req, res) => {
   try {
-    const { subject, description, priority } = req.body;
+    const { subject, description, priority, assignedTo, cc } = req.body;
     const user = await User.findByPk(req.user.id);
+
+    let finalAssignee = assignedTo;
+    if (!finalAssignee) {
+      if (user.managerId) {
+        finalAssignee = user.managerId;
+      } else {
+        const firstAdmin = await User.findOne({ where: { role: 'admin' } });
+        if (firstAdmin) {
+          finalAssignee = firstAdmin.id;
+        }
+      }
+    }
 
     const ticket = await Ticket.create({
       userId: req.user.id,
-      assignedTo: user.managerId,
+      assignedTo: finalAssignee,
+      cc: cc || '',
       subject,
       description,
       priority,
@@ -23,10 +36,18 @@ export const createTicket = async (req, res) => {
 
 export const getMyTickets = async (req, res) => {
   try {
+    const userIdStr = String(req.user.id);
     const tickets = await Ticket.findAll({ 
-      where: { userId: req.user.id },
+      where: {
+        [Op.or]: [
+          { userId: req.user.id },
+          { assignedTo: req.user.id },
+          { cc: { [Op.like]: `%${userIdStr}%` } }
+        ]
+      },
       include: [
-        { model: User, as: 'user', attributes: ['name'] },
+        { model: User, as: 'user', attributes: ['name', 'email'] },
+        { model: User, as: 'assignee', attributes: ['name', 'email'] },
         { model: Comment, as: 'comments', include: [{ model: User, as: 'user', attributes: ['name'] }] }
       ],
       order: [['createdAt', 'DESC']]
@@ -40,6 +61,7 @@ export const getMyTickets = async (req, res) => {
 
 export const getTeamTickets = async (req, res) => {
   try {
+    const userIdStr = String(req.user.id);
     const subordinates = await User.findAll({ where: { managerId: req.user.id } });
     const subordinateIds = subordinates.map(u => u.id);
 
@@ -48,15 +70,18 @@ export const getTeamTickets = async (req, res) => {
         [Op.and]: [
           {
             [Op.or]: [
+              { userId: req.user.id },
               { assignedTo: req.user.id },
-              { userId: { [Op.in]: subordinateIds } }
+              { userId: { [Op.in]: subordinateIds } },
+              { cc: { [Op.like]: `%${userIdStr}%` } }
             ]
           },
           { hiddenFromManager: false }
         ]
       },
       include: [
-        { model: User, as: 'user', attributes: ['name'] },
+        { model: User, as: 'user', attributes: ['name', 'email'] },
+        { model: User, as: 'assignee', attributes: ['name', 'email'] },
         { model: Comment, as: 'comments', include: [{ model: User, as: 'user', attributes: ['name'] }] }
       ],
       order: [['createdAt', 'DESC']]
@@ -72,8 +97,8 @@ export const getAllTickets = async (req, res) => {
   try {
     const tickets = await Ticket.findAll({
       include: [
-        { model: User, as: 'user', attributes: ['name'] },
-        { model: User, as: 'assignee', attributes: ['name'] },
+        { model: User, as: 'user', attributes: ['name', 'email'] },
+        { model: User, as: 'assignee', attributes: ['name', 'email'] },
         { model: Comment, as: 'comments', include: [{ model: User, as: 'user', attributes: ['name'] }] }
       ],
       order: [['createdAt', 'DESC']]
@@ -91,6 +116,14 @@ export const updateTicketStatus = async (req, res) => {
     const ticket = await Ticket.findByPk(req.params.id);
 
     if (ticket) {
+      // Check permissions: Admin, Manager, or the Ticket Owner
+      const isOwner = ticket.userId === req.user.id;
+      const isManagerOrAdmin = req.user.role === 'admin' || req.user.role === 'manager' || req.user.role === 'teamlead';
+      
+      if (!isOwner && !isManagerOrAdmin) {
+        return res.status(403).json({ message: 'You do not have permission to update this ticket status' });
+      }
+
       ticket.status = status;
       await ticket.save();
       
@@ -165,6 +198,53 @@ export const escalateTicket = async (req, res) => {
     } else {
       res.status(404).json({ message: 'Ticket not found' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getTicketAssignees = async (req, res) => {
+  try {
+    const currentUser = await User.findByPk(req.user.id);
+    
+    // 1. Get all admins
+    const admins = await User.findAll({ 
+      where: { role: 'admin' }, 
+      attributes: ['id', 'name', 'role', 'email'] 
+    });
+
+    // 2. Get the user's manager/TL (if any)
+    let managers = [];
+    if (currentUser.managerId) {
+      const mgr = await User.findByPk(currentUser.managerId, {
+        attributes: ['id', 'name', 'role', 'email']
+      });
+      if (mgr) {
+        managers.push(mgr);
+      }
+    }
+
+    // 3. If the user is a manager or team lead, get all their team members (subordinates)
+    let team = [];
+    if (currentUser.role === 'manager' || currentUser.role === 'teamlead' || currentUser.role === 'admin') {
+      const condition = currentUser.role === 'admin' ? {} : { managerId: currentUser.id };
+      team = await User.findAll({
+        where: condition,
+        attributes: ['id', 'name', 'role', 'email']
+      });
+    }
+
+    // Combine and deduplicate
+    const allUsersMap = {};
+    admins.forEach(u => { allUsersMap[u.id] = u.toJSON(); });
+    managers.forEach(u => { allUsersMap[u.id] = u.toJSON(); });
+    team.forEach(u => { allUsersMap[u.id] = u.toJSON(); });
+
+    // Remove self from candidates
+    delete allUsersMap[req.user.id];
+
+    const candidates = Object.values(allUsersMap).map(u => ({ ...u, _id: u.id }));
+    res.json(candidates);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
