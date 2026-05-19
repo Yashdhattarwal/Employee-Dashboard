@@ -100,13 +100,22 @@ const startServer = async () => {
   
   // Safe automated migration for production
   try {
-    const sequelize = (await import('./config/db.js')).default;
-    await sequelize.query('ALTER TABLE Users ADD COLUMN profilePhoto VARCHAR(255);');
-    console.log('Successfully added profilePhoto column to Users table.');
+    const sequelizeInstance = (await import('./config/db.js')).default;
+    await sequelizeInstance.query('ALTER TABLE Users ADD COLUMN profilePhoto VARCHAR(255);');
+    console.log('Successfully checked profilePhoto column on Users table.');
   } catch (error) {
-    // Error expected if column already exists
-    if (!error.message.includes('Duplicate column name')) {
-      console.error('Migration notice:', error.message);
+    if (!error.message.includes('Duplicate column name') && !error.message.includes('already exists')) {
+      console.error('Migration notice (profilePhoto):', error.message);
+    }
+  }
+
+  try {
+    const sequelizeInstance = (await import('./config/db.js')).default;
+    await sequelizeInstance.query('ALTER TABLE Tickets ADD COLUMN cc TEXT;');
+    console.log('Successfully checked cc column on Tickets table.');
+  } catch (error) {
+    if (!error.message.includes('Duplicate column name') && !error.message.includes('already exists')) {
+      console.error('Migration notice (cc):', error.message);
     }
   }
 
