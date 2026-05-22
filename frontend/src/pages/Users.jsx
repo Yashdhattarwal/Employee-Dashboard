@@ -376,11 +376,11 @@ const Users = () => {
                 
                 {(formData.role === 'employee' || formData.role === 'teamlead') && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Assign {formData.role === 'teamlead' ? 'Manager' : 'Supervisor'}</label>
-                    <select required className="input-field mt-1" 
+                    <label className="block text-sm font-medium text-slate-700">Assign {formData.role === 'teamlead' ? 'Manager' : 'Supervisor'} (Optional)</label>
+                    <select className="input-field mt-1" 
                       value={formData.managerId} onChange={e => setFormData({...formData, managerId: e.target.value})}
                     >
-                      <option value="">Select {formData.role === 'teamlead' ? 'Manager' : 'Supervisor'}</option>
+                      <option value="">None (No Supervisor)</option>
                       {managers
                         .filter(m => {
                           if (formData.role === 'teamlead') return m.role === 'manager';
