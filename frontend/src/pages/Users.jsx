@@ -27,8 +27,8 @@ const Users = () => {
       const endpoint = currentUser.role === 'admin' ? '/api/users' : '/api/users/team';
       const { data } = await axios.get(endpoint, { withCredentials: true });
       setUsers(data);
-      // Possible managers can be managers or team leads
-      setManagers(data.filter(u => u.role === 'manager' || u.role === 'teamlead'));
+      // Possible managers can be managers, team leads, or admins
+      setManagers(data.filter(u => u.role === 'manager' || u.role === 'teamlead' || u.role === 'admin'));
     } catch (err) {
       console.error(err);
     }
@@ -383,8 +383,8 @@ const Users = () => {
                       <option value="">None (No Supervisor)</option>
                       {managers
                         .filter(m => {
-                          if (formData.role === 'teamlead') return m.role === 'manager';
-                          return true; // Employees can report to anyone in managers list (Manager/TL)
+                          if (formData.role === 'teamlead') return m.role === 'manager' || m.role === 'admin';
+                          return true; // Employees can report to anyone in managers list (Manager/TL/Admin)
                         })
                         .map(m => (
                         <option key={m.id} value={m.id}>{m.name} ({m.employeeId}) - {m.role.toUpperCase()}</option>
