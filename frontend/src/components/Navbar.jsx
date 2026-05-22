@@ -1,11 +1,31 @@
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Bell, Search, Menu, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Navbar = ({ toggleSidebar, toggleCollapse, isCollapsed }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [hasUnacknowledged, setHasUnacknowledged] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const checkNotifications = async () => {
+      try {
+        const { data } = await axios.get('/api/notifications', { withCredentials: true });
+        const unack = data.some(n => !n.acknowledgements || n.acknowledgements.length === 0);
+        setHasUnacknowledged(unack);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    checkNotifications();
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
@@ -40,7 +60,9 @@ const Navbar = ({ toggleSidebar, toggleCollapse, isCollapsed }) => {
           className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors group"
         >
           <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-white group-hover:scale-110 transition-transform"></span>
+          {hasUnacknowledged && (
+            <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-white group-hover:scale-110 transition-transform animate-pulse"></span>
+          )}
         </button>
 
         <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-6 border-l border-slate-200">

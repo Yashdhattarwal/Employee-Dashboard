@@ -283,22 +283,32 @@ const EmployeeDashboard = () => {
       <div className="glass-panel p-6">
         <h2 className="text-lg font-semibold text-slate-800 mb-4">Recent Activity</h2>
         <div className="space-y-4">
-          {activities.map((act, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <Clock size={18} className="text-primary" />
+          {activities.map((act, i) => {
+            const timeOfAction = act.checkIn || (act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+            return (
+              <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                    <Clock size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Marked Attendance</p>
+                    <p className="text-xs text-slate-500">
+                      {act.date}
+                      {timeOfAction ? ` at ${timeOfAction}` : ''}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">Marked Attendance</p>
-                  <p className="text-xs text-slate-500">{act.date} at {act.checkIn}</p>
-                </div>
+                <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                  act.status === 'Absent' ? 'bg-danger/15 text-danger' :
+                  (act.status === 'On Leave' || act.status === 'Leave') ? 'bg-warning/15 text-warning-hover' :
+                  'bg-success/15 text-success'
+                }`}>
+                  {act.status}
+                </span>
               </div>
-              <span className="px-3 py-1 bg-success/10 text-success text-xs font-bold rounded-full">
-                {act.status}
-              </span>
-            </div>
-          ))}
+            );
+          })}
           {activities.length === 0 && <p className="text-center text-slate-400 py-4">No recent activity</p>}
         </div>
       </div>

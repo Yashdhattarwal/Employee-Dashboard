@@ -1,7 +1,7 @@
 import { useContext, useState, useRef, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { Camera, Upload, User as UserIcon } from 'lucide-react';
+import { Camera, Upload, User as UserIcon, Eye, EyeOff, Check, X } from 'lucide-react';
 
 const Settings = () => {
   const { user, setUser } = useContext(AuthContext);
@@ -9,9 +9,96 @@ const Settings = () => {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('app-theme') || 'dark');
   const fileInputRef = useRef(null);
+
+  // Crop states
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const passwordRules = [
+    { label: 'Minimum 8 characters', test: (pwd) => pwd.length >= 8 },
+    { label: 'At least 1 uppercase letter', test: (pwd) => /[A-Z]/.test(pwd) },
+    { label: 'At least 1 lowercase letter', test: (pwd) => /[a-z]/.test(pwd) },
+    { label: 'At least 1 number', test: (pwd) => /\d/.test(pwd) },
+    { label: 'At least 1 special character (!@#$%^&* etc.)', test: (pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd) },
+    { label: 'No spaces allowed', test: (pwd) => pwd.length > 0 && !/\s/.test(pwd) }
+  ];
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result);
+      setShowCropModal(true);
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setOffset({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y
+    });
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleCropApply = () => {
+    const img = new Image();
+    img.src = cropImageSrc;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 300, 300);
+      
+      const imageAspect = img.width / img.height;
+      let drawWidth = 300;
+      let drawHeight = 300;
+      
+      if (imageAspect > 1) {
+        drawHeight = 300 / imageAspect;
+      } else {
+        drawWidth = 300 * imageAspect;
+      }
+      
+      ctx.translate(150 + offset.x, 150 + offset.y);
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      
+      canvas.toBlob((blob) => {
+        const croppedFile = new File([blob], 'cropped-profile.jpg', { type: 'image/jpeg' });
+        setFile(croppedFile);
+        setShowCropModal(false);
+      }, 'image/jpeg', 0.95);
+    };
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -90,7 +177,7 @@ const Settings = () => {
               <input 
                 type="file" 
                 ref={fileInputRef}
-                onChange={(e) => setFile(e.target.files[0])}
+                onChange={handleFileChange}
                 className="hidden" 
                 accept="image/*"
               />
@@ -172,19 +259,50 @@ const Settings = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700">New Password</label>
-              <div className="mt-1">
+              <div className="mt-1 relative rounded-xl shadow-sm">
                 <input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'} 
                   placeholder="••••••••" 
-                  className="input-field" 
+                  className="input-field pr-10" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
+
+            {password && (
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Password Requirements:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {passwordRules.map((rule, idx) => {
+                    const passed = rule.test(password);
+                    return (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        {passed ? (
+                          <Check size={14} className="text-success" />
+                        ) : (
+                          <X size={14} className="text-danger" />
+                        )}
+                        <span className={passed ? 'text-success font-medium animate-in fade-in duration-300' : 'text-danger font-medium'}>
+                          {rule.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <button 
               onClick={handlePasswordUpdate}
-              disabled={passwordUpdating || !password} 
+              disabled={passwordUpdating || !password || !passwordRules.every(rule => rule.test(password))} 
               className="btn-primary mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {passwordUpdating ? 'Updating...' : 'Update Password'}
@@ -192,6 +310,84 @@ const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* Profile Photo Crop Modal */}
+      {showCropModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary p-5 text-white">
+              <h3 className="text-lg font-bold">Crop Profile Photo</h3>
+              <p className="text-primary-foreground/80 text-xs mt-1">Drag the photo to position, or use the slider to zoom.</p>
+            </div>
+            
+            <div className="p-6 flex flex-col items-center gap-6">
+              {/* Cropping Arena */}
+              <div 
+                className="relative w-64 h-64 border border-slate-200 bg-slate-900 rounded-xl overflow-hidden cursor-move select-none"
+                onMouseDown={handleDragStart}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+              >
+                <img 
+                  src={cropImageSrc} 
+                  alt="Crop Target" 
+                  className="absolute pointer-events-none origin-center"
+                  style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                    top: '0px',
+                    left: '0px',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+                {/* Circular overlay representing crop frame */}
+                <div className="absolute inset-0 border-4 border-primary rounded-full pointer-events-none bg-slate-950/30 mix-blend-overlay"></div>
+              </div>
+
+              {/* Zoom Control Slider */}
+              <div className="w-full space-y-1">
+                <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
+                  <span>Zoom</span>
+                  <span>{Math.round(zoom * 100)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="3" 
+                  step="0.05" 
+                  value={zoom} 
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 w-full mt-2">
+                <button 
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setFile(null);
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleCropApply}
+                  className="btn-primary flex-1"
+                >
+                  Crop & Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

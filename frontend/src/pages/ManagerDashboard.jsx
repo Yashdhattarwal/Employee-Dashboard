@@ -271,16 +271,6 @@ const ManagerDashboard = () => {
           >
              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
                 {card.title}
-                {card.clickable && (
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase animate-pulse ${
-                    card.type === 'staff' ? 'bg-primary/20 text-primary' :
-                    card.type === 'present' ? 'bg-success/20 text-success' :
-                    card.type === 'leave' ? 'bg-warning/20 text-warning' :
-                    card.type === 'tickets' ? 'bg-danger/20 text-danger' : ''
-                  }`}>
-                    View
-                  </span>
-                )}
              </p>
              <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-slate-800">{card.value}</h3>

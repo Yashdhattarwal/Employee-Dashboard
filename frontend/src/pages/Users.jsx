@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { X, Trash2, Shield, UserX, UserCheck, Pencil } from 'lucide-react';
+import { X, Trash2, Shield, UserX, UserCheck, Pencil, Eye, EyeOff, Check, Camera, Upload } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -11,6 +11,93 @@ const Users = () => {
   const [managers, setManagers] = useState([]);
   const [error, setError] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
+
+  // Password & Crop states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const passwordRules = [
+    { label: 'Minimum 8 characters', test: (pwd) => pwd.length >= 8 },
+    { label: 'At least 1 uppercase letter', test: (pwd) => /[A-Z]/.test(pwd) },
+    { label: 'At least 1 lowercase letter', test: (pwd) => /[a-z]/.test(pwd) },
+    { label: 'At least 1 number', test: (pwd) => /\d/.test(pwd) },
+    { label: 'At least 1 special character (!@#$%^&* etc.)', test: (pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd) },
+    { label: 'No spaces allowed', test: (pwd) => pwd.length > 0 && !/\s/.test(pwd) }
+  ];
+
+  const handlePhotoSelect = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result);
+      setShowCropModal(true);
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setOffset({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y
+    });
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleCropApply = () => {
+    const img = new Image();
+    img.src = cropImageSrc;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 300, 300);
+      
+      const imageAspect = img.width / img.height;
+      let drawWidth = 300;
+      let drawHeight = 300;
+      
+      if (imageAspect > 1) {
+        drawHeight = 300 / imageAspect;
+      } else {
+        drawWidth = 300 * imageAspect;
+      }
+      
+      ctx.translate(150 + offset.x, 150 + offset.y);
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      
+      canvas.toBlob((blob) => {
+        const croppedFile = new File([blob], 'cropped-profile.jpg', { type: 'image/jpeg' });
+        setPhotoFile(croppedFile);
+        setShowCropModal(false);
+      }, 'image/jpeg', 0.95);
+    };
+  };
 
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', role: 'employee', managerId: '',
@@ -240,7 +327,7 @@ const Users = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
-                  <input type="file" accept="image/*" onChange={e => setPhotoFile(e.target.files[0])} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors" />
+                  <input type="file" accept="image/*" onChange={handlePhotoSelect} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors" />
                 </div>
               </div>
 
@@ -266,12 +353,49 @@ const Users = () => {
                 />
               </div>
 
-              <div>
+               <div>
                 <label className="block text-sm font-medium text-slate-700">Password {editingUserId && '(Leave blank to keep current)'}</label>
-                <input required={!editingUserId} type="password" placeholder={editingUserId ? "Optional" : "Min 6 characters"} className="input-field mt-1" 
-                  value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} 
-                />
+                <div className="mt-1 relative rounded-xl shadow-sm">
+                  <input 
+                    required={!editingUserId} 
+                    type={showPassword ? 'text' : 'password'} 
+                    placeholder={editingUserId ? "Optional (Leave blank to keep current)" : "Enter complex password"} 
+                    className="input-field pr-10" 
+                    value={formData.password} 
+                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
+
+              {formData.password && (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Password Requirements:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {passwordRules.map((rule, idx) => {
+                      const passed = rule.test(formData.password);
+                      return (
+                        <div key={idx} className="flex items-center gap-2 text-xs">
+                          {passed ? (
+                            <Check size={14} className="text-success" />
+                          ) : (
+                            <X size={14} className="text-danger" />
+                          )}
+                          <span className={passed ? 'text-success font-medium' : 'text-danger font-medium'}>
+                            {rule.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Salary Fields */}
               <div className="border-t border-slate-100 pt-4">
@@ -404,9 +528,93 @@ const Users = () => {
 
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => { setShowModal(false); setEditingUserId(null); }} className="btn-secondary flex-1">Cancel</button>
-                <button type="submit" className="btn-primary flex-1">{editingUserId ? 'Save Changes' : 'Create User'}</button>
+                <button 
+                  type="submit" 
+                  disabled={formData.password ? !passwordRules.every(rule => rule.test(formData.password)) : (!editingUserId)}
+                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editingUserId ? 'Save Changes' : 'Create User'}
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Photo Crop Modal */}
+      {showCropModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary p-5 text-white">
+              <h3 className="text-lg font-bold">Crop Profile Photo</h3>
+              <p className="text-primary-foreground/80 text-xs mt-1">Drag the photo to position, or use the slider to zoom.</p>
+            </div>
+            
+            <div className="p-6 flex flex-col items-center gap-6">
+              {/* Cropping Arena */}
+              <div 
+                className="relative w-64 h-64 border border-slate-200 bg-slate-900 rounded-xl overflow-hidden cursor-move select-none"
+                onMouseDown={handleDragStart}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+              >
+                <img 
+                  src={cropImageSrc} 
+                  alt="Crop Target" 
+                  className="absolute pointer-events-none origin-center"
+                  style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                    top: '0px',
+                    left: '0px',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+                {/* Circular overlay representing crop frame */}
+                <div className="absolute inset-0 border-4 border-primary rounded-full pointer-events-none bg-slate-950/30 mix-blend-overlay"></div>
+              </div>
+
+              {/* Zoom Control Slider */}
+              <div className="w-full space-y-1">
+                <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
+                  <span>Zoom</span>
+                  <span>{Math.round(zoom * 100)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="3" 
+                  step="0.05" 
+                  value={zoom} 
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 w-full mt-2">
+                <button 
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setPhotoFile(null);
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleCropApply}
+                  className="btn-primary flex-1"
+                >
+                  Crop & Save
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

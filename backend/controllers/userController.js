@@ -29,6 +29,13 @@ export const createUser = async (req, res) => {
     }
     const employeeId = `EMP-${nextIdNum.toString().padStart(3, '0')}`;
 
+    if (password) {
+      const isValid = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password) && !/\s/.test(password);
+      if (!isValid) {
+        return res.status(400).json({ message: 'Password does not meet complexity requirements: Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char, and no spaces.' });
+      }
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -147,6 +154,10 @@ export const updateUser = async (req, res) => {
     if (employmentType) user.employmentType = employmentType;
 
     if (password) {
+      const isValid = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password) && !/\s/.test(password);
+      if (!isValid) {
+        return res.status(400).json({ message: 'Password does not meet complexity requirements: Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char, and no spaces.' });
+      }
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
     }
@@ -172,8 +183,13 @@ export const updateProfile = async (req, res) => {
     }
     
     if (req.body.password) {
+      const pwd = req.body.password;
+      const isValid = pwd.length >= 8 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /\d/.test(pwd) && /[!@#$%^&*(),.?":{}|<>]/.test(pwd) && !/\s/.test(pwd);
+      if (!isValid) {
+        return res.status(400).json({ message: 'Password does not meet complexity requirements: Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char, and no spaces.' });
+      }
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(req.body.password, salt);
+      user.password = await bcrypt.hash(pwd, salt);
     }
 
     await user.save();
