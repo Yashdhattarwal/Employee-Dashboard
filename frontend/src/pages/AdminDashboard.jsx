@@ -8,13 +8,15 @@ import { useContext } from 'react';
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
+  const [showPresentModal, setShowPresentModal] = useState(false);
   const [stats, setStats] = useState({
     totalEmployees: 0,
     presentToday: 0,
     onLeave: 0,
     pendingTickets: 0,
     attendanceTrend: [],
-    recentLeaves: []
+    recentLeaves: [],
+    presentList: []
   });
   
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -81,7 +83,7 @@ const AdminDashboard = () => {
 
   const cards = [
     { title: 'Total Staff', value: stats.totalEmployees, icon: Users, color: 'bg-primary/10 text-primary' },
-    { title: 'Present Today', value: stats.presentToday, icon: UserCheck, color: 'bg-success/10 text-success' },
+    { title: 'Present Today', value: stats.presentToday, icon: UserCheck, color: 'bg-success/10 text-success', clickable: true },
     { title: 'On Leave', value: stats.onLeave, icon: Calendar, color: 'bg-warning/10 text-warning' },
     { title: 'Pending Tickets', value: stats.pendingTickets, icon: Ticket, color: 'bg-danger/10 text-danger' },
   ];
@@ -101,13 +103,23 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, i) => (
-          <div key={i} className="glass-panel p-6 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+          <div 
+            key={i} 
+            onClick={() => card.clickable && setShowPresentModal(true)}
+            className={`glass-panel p-6 animate-in fade-in slide-in-from-bottom-2 duration-500 ${
+              card.clickable ? 'cursor-pointer hover:border-success/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300' : ''
+            }`} 
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-xl ${card.color}`}>
                 <card.icon size={24} />
               </div>
               <div>
-                <p className="text-slate-500 text-sm font-medium">{card.title}</p>
+                <p className="text-slate-500 text-sm font-medium flex items-center gap-1">
+                  {card.title}
+                  {card.clickable && <span className="text-[9px] bg-success/20 text-success px-1.5 py-0.5 rounded font-bold uppercase animate-pulse">View</span>}
+                </p>
                 <h3 className="text-2xl font-bold text-slate-800">{card.value}</h3>
               </div>
             </div>
@@ -256,6 +268,84 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {showPresentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div className="bg-success p-6 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <UserCheck size={24} />
+                  Present Today ({stats.presentList?.length || 0})
+                </h2>
+                <p className="text-emerald-100 text-xs mt-1">Detailed log of checked-in employees for today.</p>
+              </div>
+              <button 
+                onClick={() => setShowPresentModal(false)}
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {(!stats.presentList || stats.presentList.length === 0) ? (
+                <div className="text-center py-12 text-slate-400">
+                  <UserCheck size={48} className="mx-auto mb-3 opacity-25" />
+                  <p className="font-semibold text-slate-600">No employees present today yet.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Employee</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Clock In</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Clock Out</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Working Hours</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {stats.presentList.map((entry) => (
+                        <tr key={entry._id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-4 font-semibold text-slate-800">
+                            <div className="flex flex-col">
+                              <span>{entry.user?.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono font-medium">{entry.user?.employeeId}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 text-sm font-medium text-slate-600 font-mono">{entry.checkIn || '-'}</td>
+                          <td className="py-4 text-sm font-medium text-slate-600 font-mono">{entry.checkOut || '-'}</td>
+                          <td className="py-4 text-sm font-bold text-primary font-mono">{entry.workingHours ? `${entry.workingHours} hrs` : '-'}</td>
+                          <td className="py-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                              entry.status === 'Present' ? 'bg-success/15 text-success' :
+                              entry.status === 'Checked In' ? 'bg-primary/15 text-primary' :
+                              entry.status === 'Checked Out' ? 'bg-slate-100 text-slate-600' : 'bg-warning/15 text-warning'
+                            }`}>
+                              {entry.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
+              <button 
+                onClick={() => setShowPresentModal(false)}
+                className="btn-secondary px-6"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

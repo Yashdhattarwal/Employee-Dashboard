@@ -246,13 +246,22 @@ export const getDashboardStats = async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
+    // Detailed list of present employees today
+    const presentListFilter = isAdmin ? { date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } } : { userId: { [Op.in]: subordinateIds }, date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } };
+    const presentList = await Attendance.findAll({
+      where: presentListFilter,
+      include: [{ model: User, as: 'user', attributes: ['name', 'employeeId'] }],
+      order: [['checkIn', 'ASC']]
+    });
+
     res.json({
       totalEmployees: totalStaff,
       presentToday,
       onLeave,
       pendingTickets,
       attendanceTrend,
-      recentLeaves: recentLeaves.map(l => ({ ...l.toJSON(), _id: l.id }))
+      recentLeaves: recentLeaves.map(l => ({ ...l.toJSON(), _id: l.id })),
+      presentList: presentList.map(a => ({ ...a.toJSON(), _id: a.id }))
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
