@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, Coffee, LogOut, CheckCircle, Users, Calendar, Ticket, X, UserCheck } from 'lucide-react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import { AuthContext } from '../context/AuthContext';
-import { useContext } from 'react';
 
 const ManagerDashboard = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [attendance, setAttendance] = useState(null);
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -16,10 +17,16 @@ const ManagerDashboard = () => {
     pendingTickets: 0,
     attendanceTrend: [],
     recentLeaves: [],
-    presentList: []
+    presentList: [],
+    staffList: [],
+    leavesList: [],
+    ticketsList: []
   });
   const [loading, setLoading] = useState(true);
   const [showPresentModal, setShowPresentModal] = useState(false);
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showTicketsModal, setShowTicketsModal] = useState(false);
   const [showEodModal, setShowEodModal] = useState(false);
   const [eodData, setEodData] = useState({
     workDone: '',
@@ -238,21 +245,42 @@ const ManagerDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { title: 'Team Size', value: stats.totalEmployees, icon: Users, color: 'text-primary' },
-          { title: 'Present Today', value: stats.presentToday, icon: CheckCircle, color: 'text-success', clickable: true },
-          { title: 'On Leave', value: stats.onLeave, icon: Calendar, color: 'text-warning' },
-          { title: 'Team Tickets', value: stats.pendingTickets, icon: Ticket, color: 'text-danger' },
+          { title: 'Team Size', value: stats.totalEmployees, icon: Users, color: 'text-primary', clickable: true, type: 'staff' },
+          { title: 'Present Today', value: stats.presentToday, icon: CheckCircle, color: 'text-success', clickable: true, type: 'present' },
+          { title: 'On Leave', value: stats.onLeave, icon: Calendar, color: 'text-warning', clickable: true, type: 'leave' },
+          { title: 'Team Tickets', value: stats.pendingTickets, icon: Ticket, color: 'text-danger', clickable: true, type: 'tickets' },
         ].map((card, i) => (
           <div 
             key={i} 
-            onClick={() => card.clickable && setShowPresentModal(true)}
+            onClick={() => {
+              if (card.clickable) {
+                if (card.type === 'staff') setShowStaffModal(true);
+                if (card.type === 'present') setShowPresentModal(true);
+                if (card.type === 'leave') setShowLeaveModal(true);
+                if (card.type === 'tickets') setShowTicketsModal(true);
+              }
+            }}
             className={`glass-panel p-6 ${
-              card.clickable ? 'cursor-pointer hover:border-success/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-300' : ''
+              card.clickable ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.99] transition-all duration-300' : ''
+            } ${
+              card.type === 'staff' ? 'hover:border-primary/40' :
+              card.type === 'present' ? 'hover:border-success/40' :
+              card.type === 'leave' ? 'hover:border-warning/40' :
+              card.type === 'tickets' ? 'hover:border-danger/40' : ''
             }`}
           >
              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
                 {card.title}
-                {card.clickable && <span className="text-[8px] bg-success/20 text-success px-1.5 py-0.5 rounded font-bold uppercase animate-pulse">View</span>}
+                {card.clickable && (
+                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase animate-pulse ${
+                    card.type === 'staff' ? 'bg-primary/20 text-primary' :
+                    card.type === 'present' ? 'bg-success/20 text-success' :
+                    card.type === 'leave' ? 'bg-warning/20 text-warning' :
+                    card.type === 'tickets' ? 'bg-danger/20 text-danger' : ''
+                  }`}>
+                    View
+                  </span>
+                )}
              </p>
              <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-slate-800">{card.value}</h3>
@@ -457,6 +485,239 @@ const ManagerDashboard = () => {
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
               <button 
                 onClick={() => setShowPresentModal(false)}
+                className="btn-secondary px-6"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Total Staff Modal */}
+      {showStaffModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div className="bg-primary p-6 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Users size={24} />
+                  Team Size ({stats.staffList?.length || 0})
+                </h2>
+                <p className="text-indigo-100 text-xs mt-1">Full registry of active team members.</p>
+              </div>
+              <button 
+                onClick={() => setShowStaffModal(false)}
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {(!stats.staffList || stats.staffList.length === 0) ? (
+                <div className="text-center py-12 text-slate-400">
+                  <Users size={48} className="mx-auto mb-3 opacity-25" />
+                  <p className="font-semibold text-slate-600">No team members found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Employee ID</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Name</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Role</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {stats.staffList.map((member) => (
+                        <tr key={member._id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-4 text-sm font-bold text-primary font-mono">{member.employeeId}</td>
+                          <td className="py-4 font-semibold text-slate-800">{member.name}</td>
+                          <td className="py-4">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-primary/15 text-primary">
+                              {member.role === 'teamlead' ? 'Team Lead' : member.role}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
+              <button 
+                onClick={() => setShowStaffModal(false)}
+                className="btn-secondary px-6"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* On Leave / Absent Modal */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div className="bg-warning p-6 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Calendar size={24} />
+                  On Leave / Absent Today ({stats.leavesList?.length || 0})
+                </h2>
+                <p className="text-amber-50 text-xs mt-1">Detailed log of team members currently on leave or absent today.</p>
+              </div>
+              <button 
+                onClick={() => setShowLeaveModal(false)}
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {(!stats.leavesList || stats.leavesList.length === 0) ? (
+                <div className="text-center py-12 text-slate-400">
+                  <Calendar size={48} className="mx-auto mb-3 opacity-25" />
+                  <p className="font-semibold text-slate-600">No team members on leave or absent today.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Employee Name</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Employee ID</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Date</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {stats.leavesList.map((entry) => (
+                        <tr key={entry._id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-4 font-semibold text-slate-800">{entry.user?.name}</td>
+                          <td className="py-4 text-sm font-medium text-slate-500 font-mono">{entry.user?.employeeId}</td>
+                          <td className="py-4 text-sm font-semibold text-slate-600 font-mono">
+                            {new Date(entry.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
+                          </td>
+                          <td className="py-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                              entry.status === 'On Leave' ? 'bg-warning/15 text-warning-hover' : 'bg-danger/15 text-danger'
+                            }`}>
+                              {entry.status === 'On Leave' ? 'On Leave' : 'Absent'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
+              <button 
+                onClick={() => setShowLeaveModal(false)}
+                className="btn-secondary px-6"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Tickets Modal */}
+      {showTicketsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div className="bg-danger p-6 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Ticket size={24} />
+                  Team Pending Tickets ({stats.ticketsList?.length || 0})
+                </h2>
+                <p className="text-rose-100 text-xs mt-1">Click on any ticket or name to jump directly to the support chat.</p>
+              </div>
+              <button 
+                onClick={() => setShowTicketsModal(false)}
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {(!stats.ticketsList || stats.ticketsList.length === 0) ? (
+                <div className="text-center py-12 text-slate-400">
+                  <Ticket size={48} className="mx-auto mb-3 opacity-25" />
+                  <p className="font-semibold text-slate-600">No team tickets found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Initiated By</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Subject / Ticket</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Priority</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Created Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {stats.ticketsList.map((ticket) => (
+                        <tr 
+                          key={ticket._id} 
+                          onClick={() => {
+                            setShowTicketsModal(false);
+                            navigate('/manager/tickets');
+                          }}
+                          className="hover:bg-danger/5 transition-colors cursor-pointer group"
+                        >
+                          <td className="py-4 font-semibold text-slate-800 group-hover:text-danger transition-colors">
+                            <div className="flex flex-col">
+                              <span>{ticket.user?.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono font-medium">{ticket.user?.employeeId}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 text-sm text-slate-700">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-800">{ticket.title}</span>
+                              <span className="text-xs text-slate-500 line-clamp-1">{ticket.description}</span>
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                              ticket.priority === 'High' ? 'bg-danger/15 text-danger animate-pulse' :
+                              ticket.priority === 'Medium' ? 'bg-warning/15 text-warning-hover' : 'bg-success/15 text-success'
+                            }`}>
+                              {ticket.priority}
+                            </span>
+                          </td>
+                          <td className="py-4 text-xs font-medium text-slate-500 font-mono">
+                            {new Date(ticket.createdAt).toLocaleString(undefined, {
+                              month: 'short', 
+                              day: 'numeric', 
+                              hour: '2-digit', 
+                              minute: '2-digit'
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
+              <button 
+                onClick={() => setShowTicketsModal(false)}
                 className="btn-secondary px-6"
               >
                 Close

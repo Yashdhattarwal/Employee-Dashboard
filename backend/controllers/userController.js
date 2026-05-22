@@ -254,6 +254,37 @@ export const getDashboardStats = async (req, res) => {
       order: [['checkIn', 'ASC']]
     });
 
+    // 1. Detailed list of Total Staff
+    const staffListFilter = isAdmin ? { role: { [Op.in]: ['employee', 'manager', 'teamlead'] } } : { id: { [Op.in]: subordinateIds } };
+    const staffList = await User.findAll({
+      where: staffListFilter,
+      attributes: ['id', 'name', 'employeeId', 'role'],
+      order: [['name', 'ASC']]
+    });
+
+    // 2. Detailed list of Leaves and Absents today
+    const leavesListFilter = isAdmin ? { date: today, status: { [Op.in]: ['On Leave', 'Absent'] } } : { userId: { [Op.in]: subordinateIds }, date: today, status: { [Op.in]: ['On Leave', 'Absent'] } };
+    const leavesList = await Attendance.findAll({
+      where: leavesListFilter,
+      include: [{ model: User, as: 'user', attributes: ['name', 'employeeId'] }],
+      order: [['status', 'ASC']]
+    });
+
+    // 3. Detailed list of Pending Tickets today
+    const ticketsListFilter = isAdmin 
+      ? { status: { [Op.not]: 'Resolved' } } 
+      : { 
+          [Op.and]: [
+            { status: { [Op.not]: 'Resolved' } },
+            { [Op.or]: [{ userId: { [Op.in]: subordinateIds } }, { assignedTo: userId }] }
+          ]
+        };
+    const ticketsList = await Ticket.findAll({
+      where: ticketsListFilter,
+      include: [{ model: User, as: 'user', attributes: ['name', 'employeeId'] }],
+      order: [['createdAt', 'DESC']]
+    });
+
     res.json({
       totalEmployees: totalStaff,
       presentToday,
@@ -261,7 +292,10 @@ export const getDashboardStats = async (req, res) => {
       pendingTickets,
       attendanceTrend,
       recentLeaves: recentLeaves.map(l => ({ ...l.toJSON(), _id: l.id })),
-      presentList: presentList.map(a => ({ ...a.toJSON(), _id: a.id }))
+      presentList: presentList.map(a => ({ ...a.toJSON(), _id: a.id })),
+      staffList: staffList.map(u => ({ ...u.toJSON(), _id: u.id })),
+      leavesList: leavesList.map(a => ({ ...a.toJSON(), _id: a.id })),
+      ticketsList: ticketsList.map(t => ({ ...t.toJSON(), _id: t.id }))
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
