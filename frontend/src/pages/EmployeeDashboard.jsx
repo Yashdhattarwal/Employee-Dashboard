@@ -188,7 +188,24 @@ const EmployeeDashboard = () => {
         </h2>
         
         <div className="flex flex-wrap gap-4">
-          {!attendance?.checkIn ? (
+          {attendance?.status === 'Pending Approval' ? (
+            <div className="flex-1 bg-amber-50/70 p-6 rounded-2xl border border-amber-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in zoom-in duration-200">
+              <div>
+                <p className="text-sm font-bold text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></span>
+                  Clock Out Pending Admin Approval
+                </p>
+                <p className="text-xs text-amber-700 mt-1 font-medium">Your clock-out request has been logged but requires Admin approval because your working hours exceeded the standard late sign-out limit. Your productive time stopped immediately upon your checkout attempt.</p>
+                <div className="flex gap-4 mt-3 text-xs font-semibold text-slate-600">
+                  <span>Checked In: <strong className="text-slate-800">{attendance.checkIn}</strong></span>
+                  <span>Checked Out (Captured): <strong className="text-slate-800">{attendance.pendingCheckOut}</strong></span>
+                </div>
+              </div>
+              <span className="px-3 py-1.5 bg-amber-500/10 text-amber-600 text-xs font-bold rounded-full border border-amber-200/50 animate-pulse uppercase tracking-wider shrink-0">
+                Awaiting Admin Approval
+              </span>
+            </div>
+          ) : !attendance?.checkIn ? (
             <button 
               onClick={() => handleAction('clock-in')}
               className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"

@@ -156,7 +156,7 @@ const Notifications = () => {
                     <div className="mt-1">{getIcon(n.type)}</div>
                     <div>
                       <h3 className={`font-bold ${isAcknowledged ? 'text-slate-600' : 'text-slate-800'}`}>{n.title}</h3>
-                      <p className="text-sm text-slate-600 mt-1">{n.message}</p>
+                      <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{n.message}</p>
                       <div className="flex items-center gap-3 mt-3">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                           <User size={10} /> {n.sender?.name}
@@ -208,7 +208,7 @@ const Notifications = () => {
                     </span>
                     <h3 className="font-bold text-slate-800">{n.title}</h3>
                   </div>
-                  <p className="text-sm text-slate-600 mt-1">{n.message}</p>
+                  <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{n.message}</p>
                   <p className="text-[10px] font-bold text-slate-400 uppercase mt-3">{new Date(n.createdAt).toLocaleString()}</p>
                 </div>
                 <button 

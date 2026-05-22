@@ -195,12 +195,33 @@ export const selfAttendanceAction = async (req, res) => {
       const breaks = await Break.findAll({ where: { attendanceId: attendance.id } });
       const finalStatus = await validateAttendanceStatus(user, attendance.date, attendance.checkIn, time, breaks);
 
-      attendance.checkOut = time;
-      attendance.status = finalStatus;
-      if (req.body.eodWork) attendance.eodWork = req.body.eodWork;
-      if (req.body.pendingTasks) attendance.pendingTasks = req.body.pendingTasks;
-      if (req.file) attendance.eodAttachment = `/uploads/eod/${req.file.filename}`;
-      await attendance.save();
+      const isFullTime = user.employmentType === 'Full-time';
+      const limitMinutes = isFullTime ? 9 * 60 : 5 * 60;
+      const elapsedMinutes = calculateDiffMinutes(attendance.checkIn, time);
+
+      if (elapsedMinutes > limitMinutes) {
+        attendance.pendingCheckOut = time;
+        attendance.status = 'Pending Approval';
+        if (req.body.eodWork) attendance.eodWork = req.body.eodWork;
+        if (req.body.pendingTasks) attendance.pendingTasks = req.body.pendingTasks;
+        if (req.file) attendance.eodAttachment = `/uploads/eod/${req.file.filename}`;
+        await attendance.save();
+
+        await AttendanceCorrection.create({
+          userId: user.id,
+          managerId: user.managerId || 1,
+          comment: `Exceeded late sign-out limit (Shift: ${user.shiftTime}-${user.shiftEndTime}). Attempted checkout at ${time} (${Math.round(elapsedMinutes / 60)} hrs elapsed). Productive time stopped, requires Admin approval.`,
+          date: attendance.date,
+          status: 'Pending'
+        });
+      } else {
+        attendance.checkOut = time;
+        attendance.status = finalStatus;
+        if (req.body.eodWork) attendance.eodWork = req.body.eodWork;
+        if (req.body.pendingTasks) attendance.pendingTasks = req.body.pendingTasks;
+        if (req.file) attendance.eodAttachment = `/uploads/eod/${req.file.filename}`;
+        await attendance.save();
+      }
     } else if (type === 'break-in') {
       const activeBreak = await Break.findOne({ where: { attendanceId: attendance.id, endTime: null } });
       if (activeBreak) return res.status(400).json({ message: 'Already on a break' });
@@ -311,6 +332,26 @@ export const updateCorrectionStatus = async (req, res) => {
 
     correction.status = status;
     await correction.save();
+
+    // Finalize late sign-out attendance if matching record is in Pending Approval state
+    const attendance = await Attendance.findOne({ where: { userId: correction.userId, date: correction.date } });
+    if (attendance && attendance.status === 'Pending Approval') {
+      if (status === 'Approved') {
+        const user = await User.findByPk(attendance.userId);
+        const breaks = await Break.findAll({ where: { attendanceId: attendance.id } });
+        const finalStatus = await validateAttendanceStatus(user, attendance.date, attendance.checkIn, attendance.pendingCheckOut, breaks);
+        
+        attendance.checkOut = attendance.pendingCheckOut;
+        attendance.status = finalStatus;
+        attendance.pendingCheckOut = null;
+        await attendance.save();
+      } else {
+        attendance.checkOut = attendance.pendingCheckOut;
+        attendance.status = 'Absent';
+        attendance.pendingCheckOut = null;
+        await attendance.save();
+      }
+    }
 
     res.json(correction);
   } catch (error) {

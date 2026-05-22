@@ -23,6 +23,9 @@ const Attendance = sequelize.define('Attendance', {
   checkOut: {
     type: DataTypes.STRING,
   },
+  pendingCheckOut: {
+    type: DataTypes.STRING,
+  },
   breakIn: {
     type: DataTypes.STRING,
   },

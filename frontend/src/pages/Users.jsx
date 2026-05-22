@@ -198,6 +198,38 @@ const Users = () => {
     });
     setShowModal(true);
   };
+  
+  const handleOpenAddModal = () => {
+    setEditingUserId(null);
+    setPhotoFile(null);
+    setFormData({
+      name: '', email: '', password: '', role: 'employee', managerId: '',
+      salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
+      bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
+      shiftTime: '09:00 AM',
+      shiftEndTime: '06:00 PM',
+      designation: '',
+      employmentType: 'Full-time'
+    });
+    setError('');
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingUserId(null);
+    setPhotoFile(null);
+    setFormData({
+      name: '', email: '', password: '', role: 'employee', managerId: '',
+      salaryINR: '', salaryUSD: '', salaryCurrency: 'INR',
+      bankName: '', accountHolderName: '', accountNumber: '', ifscCode: '', branchName: '',
+      shiftTime: '09:00 AM',
+      shiftEndTime: '06:00 PM',
+      designation: '',
+      employmentType: 'Full-time'
+    });
+    setError('');
+  };
 
   const handleDelete = async (id) => {
     if (window.confirm('PERMANENTLY DELETE this user? All their attendance and records will be lost.')) {
@@ -217,7 +249,7 @@ const Users = () => {
           {currentUser?.role === 'admin' ? 'User Management' : 'Team Summary'}
         </h1>
         {currentUser?.role === 'admin' && (
-          <button className="btn-primary" onClick={() => setShowModal(true)}>Add New User</button>
+          <button className="btn-primary" onClick={handleOpenAddModal}>Add New User</button>
         )}
       </div>
       
@@ -307,7 +339,7 @@ const Users = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative animate-in fade-in zoom-in duration-200">
             <button 
-              onClick={() => setShowModal(false)}
+              onClick={handleCloseModal}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors"
             >
               <X size={20} />
@@ -527,7 +559,7 @@ const Users = () => {
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => { setShowModal(false); setEditingUserId(null); }} className="btn-secondary flex-1">Cancel</button>
+                <button type="button" onClick={handleCloseModal} className="btn-secondary flex-1">Cancel</button>
                 <button 
                   type="submit" 
                   disabled={formData.password ? !passwordRules.every(rule => rule.test(formData.password)) : (!editingUserId)}

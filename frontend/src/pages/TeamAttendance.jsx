@@ -3,6 +3,28 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Calendar, Search, Filter, Plus, X, Edit2, Trash2, ChevronRight, User, ArrowLeft, Clock, CheckCircle, Coffee } from 'lucide-react';
 
+const isLateCheckIn = (checkInStr, shiftTimeStr) => {
+  if (!checkInStr || !shiftTimeStr) return false;
+  
+  const parseTimeToMinutes = (t) => {
+    if (!t || typeof t !== 'string') return null;
+    const cleanT = t.replace(/(AM|PM)/gi, '').trim();
+    const parts = cleanT.split(':');
+    if (parts.length < 2) return null;
+    let h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (t.toUpperCase().includes('PM') && h < 12) h += 12;
+    if (t.toUpperCase().includes('AM') && h === 12) h = 0;
+    return h * 60 + m;
+  };
+
+  const checkInMin = parseTimeToMinutes(checkInStr);
+  const shiftMin = parseTimeToMinutes(shiftTimeStr);
+  if (checkInMin === null || shiftMin === null) return false;
+
+  return checkInMin > shiftMin;
+};
+
 const TeamManagement = () => {
   const { user } = useContext(AuthContext);
   const [employees, setEmployees] = useState([]);
@@ -463,7 +485,16 @@ const TeamManagement = () => {
                 {recordsWithPenalties.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
                     <td className="table-cell font-medium text-slate-600">{r.date}</td>
-                    <td className="table-cell text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</td>
+                    <td className="table-cell">
+                      <div className="flex flex-col">
+                        <span className="text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</span>
+                        {r.checkIn && isLateCheckIn(r.checkIn, selectedEmployee?.shiftTime || '09:00 AM') && (
+                          <span className="inline-block mt-1 text-[9px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded border border-danger/20 w-fit uppercase tracking-wider animate-pulse">
+                            ⚠️ Late Login
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
                     <td className="table-cell">
                       {(() => {

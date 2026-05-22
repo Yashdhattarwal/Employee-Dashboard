@@ -193,12 +193,23 @@ export const updateProfile = async (req, res) => {
     }
 
     await user.save();
+
+    const updatedUser = await User.findByPk(user.id, {
+      include: [{ model: User, as: 'manager', attributes: ['name'] }]
+    });
+
     res.json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      profilePhoto: user.profilePhoto,
+      _id: updatedUser.id,
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      employeeId: updatedUser.employeeId,
+      designation: updatedUser.designation,
+      employmentType: updatedUser.employmentType,
+      managerName: updatedUser.manager?.name || 'N/A',
+      profilePhoto: updatedUser.profilePhoto,
+      firstTimeLogin: updatedUser.firstTimeLogin,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

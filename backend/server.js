@@ -119,6 +119,16 @@ const startServer = async () => {
     }
   }
 
+  try {
+    const sequelizeInstance = (await import('./config/db.js')).default;
+    await sequelizeInstance.query('ALTER TABLE Attendances ADD COLUMN pendingCheckOut VARCHAR(255);');
+    console.log('Successfully checked pendingCheckOut column on Attendances table.');
+  } catch (error) {
+    if (!error.message.includes('Duplicate column name') && !error.message.includes('already exists')) {
+      console.error('Migration notice (pendingCheckOut):', error.message);
+    }
+  }
+
   const PORT = process.env.PORT || 5000;
 
   app.listen(PORT, async () => {
