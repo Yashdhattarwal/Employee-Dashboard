@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Calendar, Ticket, Check, X, Clock } from 'lucide-react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, CheckCircle, ChevronRight } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 const AdminDashboard = () => {
@@ -608,71 +608,55 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-primary p-6 text-white flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <CheckCircle size={24} />
-                  EOD Report Details
-                </h2>
-                <p className="text-primary-foreground/80 text-xs mt-1">
-                  Submitted by {selectedEodRecord.user?.name} ({selectedEodRecord.user?.employeeId})
-                </p>
+                <h2 className="text-xl font-bold">End of Day Report</h2>
+                <p className="text-primary-foreground/80 text-xs mt-1">Submitted by {selectedEodRecord.user?.name} on {selectedEodRecord.date}</p>
               </div>
-              <button 
-                onClick={() => setSelectedEodRecord(null)}
-                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
-              >
-                <X size={18} />
+              <button onClick={() => setSelectedEodRecord(null)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <X size={20} />
               </button>
             </div>
             
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs font-semibold text-slate-600">
-                <div>
-                  <p className="text-slate-400 uppercase tracking-wider">Date</p>
-                  <p className="text-slate-800 text-sm mt-0.5">{selectedEodRecord.date}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 uppercase tracking-wider">Working Hours</p>
-                  <p className="text-slate-800 text-sm mt-0.5">{selectedEodRecord.workingHours ? `${selectedEodRecord.workingHours} hrs` : '-'}</p>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Work Done Today</h3>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                  {selectedEodRecord.eodWork}
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-sm font-bold text-slate-700 mb-1">Work Done Today</h3>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap min-h-[80px]">
-                  {selectedEodRecord.eodWork || 'No work description entered.'}
+              {selectedEodRecord.pendingTasks && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Pending Tasks</h3>
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                    {selectedEodRecord.pendingTasks}
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-slate-700 mb-1">Pending Tasks for Tomorrow</h3>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap min-h-[60px]">
-                  {selectedEodRecord.pendingTasks || 'No pending tasks.'}
-                </div>
-              </div>
+              )}
 
               {selectedEodRecord.eodAttachment && (
                 <div>
-                  <h3 className="text-sm font-bold text-slate-700 mb-1.5">Attachment</h3>
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Attachment</h3>
                   <a 
-                    href={selectedEodRecord.eodAttachment} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all"
+                    href={selectedEodRecord.eodAttachment.startsWith('http') ? selectedEodRecord.eodAttachment : `${axios.defaults.baseURL || ''}${selectedEodRecord.eodAttachment}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group"
                   >
-                    <Download size={14} />
-                    View / Download Attachment
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary border border-slate-100 shadow-sm group-hover:scale-110 transition-transform">
+                      <CheckCircle size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate">View Attachment</p>
+                      <p className="text-xs text-slate-500">Click to open in new tab</p>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-300 group-hover:text-primary transition-colors" />
                   </a>
                 </div>
               )}
             </div>
-
-            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
-              <button 
-                onClick={() => setSelectedEodRecord(null)}
-                className="btn-secondary px-6"
-              >
-                Close
-              </button>
+            
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button onClick={() => setSelectedEodRecord(null)} className="btn-primary px-8">Close Report</button>
             </div>
           </div>
         </div>
