@@ -175,7 +175,9 @@ const formatAttendanceWithISO = (attendance) => {
     if (timeStr.toUpperCase().includes('AM') && h === 12) h = 0;
     
     // Parse using server's local time zone
-    const d = new Date(dateStr);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date();
+    d.setFullYear(year, month - 1, day);
     d.setHours(h, m, 0, 0);
     return d.toISOString();
   };
@@ -422,54 +424,59 @@ export const tempCleanupDatabase = async (req, res) => {
   try {
     const logs = [];
     
-    const user = await User.findOne({ where: { name: 'Jai Prakash Pandey' } });
-    if (!user) {
-      logs.push('User Jai Prakash Pandey not found!');
-    } else {
-      const userId = user.id;
-      logs.push(`Found Jai Prakash Pandey with ID: ${userId}`);
+    // Fetch and log all recent records to be 100% sure
+    const allRecentRecords = await Attendance.findAll({
+      where: {
+        date: { [Op.in]: ['2026-05-22', '2026-05-23'] }
+      },
+      include: [{ model: User, as: 'user', attributes: ['name'] }],
+      order: [['date', 'DESC']]
+    });
+    logs.push(`All recent records: ${JSON.stringify(allRecentRecords.map(r => ({
+      userName: r.user ? r.user.name : 'Unknown',
+      userId: r.userId,
+      date: r.date,
+      checkIn: r.checkIn,
+      checkOut: r.checkOut,
+      status: r.status
+    })))}`);
 
-      const allRecords = await Attendance.findAll({
-        where: { userId },
-        order: [['date', 'DESC']],
-        limit: 10
-      });
-      logs.push(`All records for user ${userId}: ${JSON.stringify(allRecords.map(r => r.toJSON()))}`);
+    // Search for incorrect record on 2026-05-23 matching checkIn 12:13 AM for ANY user
+    const badRecord = await Attendance.findOne({
+      where: {
+        date: '2026-05-23',
+        checkIn: '12:13 AM'
+      },
+      include: [{ model: User, as: 'user', attributes: ['name'] }]
+    });
 
-      const badRecord = await Attendance.findOne({
+    if (badRecord) {
+      const badUserId = badRecord.userId;
+      const userName = badRecord.user ? badRecord.user.name : 'Unknown';
+      logs.push(`Found incorrect record for user ${userName} (ID: ${badUserId}) on 2026-05-23: ${JSON.stringify(badRecord.toJSON())}`);
+      
+      const goodRecord = await Attendance.findOne({
         where: {
-          userId,
-          date: '2026-05-23',
-          checkIn: '12:13 AM'
+          userId: badUserId,
+          date: '2026-05-22'
         }
       });
 
-      if (badRecord) {
-        logs.push(`Found incorrect record on 2026-05-23: ${JSON.stringify(badRecord.toJSON())}`);
+      if (goodRecord) {
+        logs.push(`Found correct record on 2026-05-22: ${JSON.stringify(goodRecord.toJSON())}`);
         
-        const goodRecord = await Attendance.findOne({
-          where: {
-            userId,
-            date: '2026-05-22'
-          }
-        });
+        goodRecord.checkOut = '12:13 AM';
+        goodRecord.status = 'Present';
+        await goodRecord.save();
+        logs.push(`Successfully updated 2026-05-22 record for ${userName}!`);
 
-        if (goodRecord) {
-          logs.push(`Found correct record on 2026-05-22: ${JSON.stringify(goodRecord.toJSON())}`);
-          
-          goodRecord.checkOut = '12:13 AM';
-          goodRecord.status = 'Present';
-          await goodRecord.save();
-          logs.push('Successfully updated 2026-05-22 record!');
-
-          await badRecord.destroy();
-          logs.push('Successfully deleted incorrect 2026-05-23 record!');
-        } else {
-          logs.push('Could not find 2026-05-22 record to merge checkout!');
-        }
+        await badRecord.destroy();
+        logs.push(`Successfully deleted incorrect 2026-05-23 record for ${userName}!`);
       } else {
-        logs.push('No incorrect 2026-05-23 record found with checkIn 12:13 AM.');
+        logs.push(`Could not find 2026-05-22 record for ${userName} to merge checkout!`);
       }
+    } else {
+      logs.push('No incorrect 2026-05-23 record found with checkIn 12:13 AM across any users.');
     }
 
     const allBadRecords = await Attendance.findAll({
