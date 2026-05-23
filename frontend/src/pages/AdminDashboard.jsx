@@ -6,6 +6,18 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Download, FileText, CheckCircle, ChevronRight } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
+const formatWorkingHours = (hoursDecimal) => {
+  if (!hoursDecimal) return '-';
+  const num = parseFloat(hoursDecimal);
+  if (isNaN(num)) return '-';
+  const h = Math.floor(num);
+  const m = Math.round((num - h) * 60);
+  if (h === 0 && m === 0) return '0m';
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+};
+
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -336,7 +348,7 @@ const AdminDashboard = () => {
                           </td>
                           <td className="py-4 text-sm font-medium text-slate-600 font-mono">{entry.checkIn || '-'}</td>
                           <td className="py-4 text-sm font-medium text-slate-600 font-mono">{entry.checkOut || '-'}</td>
-                          <td className="py-4 text-sm font-bold text-primary font-mono">{entry.workingHours ? `${entry.workingHours} hrs` : '-'}</td>
+                          <td className="py-4 text-sm font-bold text-primary font-mono">{formatWorkingHours(entry.workingHours)}</td>
                           <td className="py-4">
                             {entry.eodWork ? (
                               <button
