@@ -429,6 +429,13 @@ export const tempCleanupDatabase = async (req, res) => {
       const userId = user.id;
       logs.push(`Found Jai Prakash Pandey with ID: ${userId}`);
 
+      const allRecords = await Attendance.findAll({
+        where: { userId },
+        order: [['date', 'DESC']],
+        limit: 10
+      });
+      logs.push(`All records for user ${userId}: ${JSON.stringify(allRecords.map(r => r.toJSON()))}`);
+
       const badRecord = await Attendance.findOne({
         where: {
           userId,
