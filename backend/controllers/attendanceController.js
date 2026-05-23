@@ -417,3 +417,103 @@ export const updateCorrectionStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const tempCleanupDatabase = async (req, res) => {
+  try {
+    const logs = [];
+    
+    const user = await User.findOne({ where: { name: 'Jai Prakash Pandey' } });
+    if (!user) {
+      logs.push('User Jai Prakash Pandey not found!');
+    } else {
+      const userId = user.id;
+      logs.push(`Found Jai Prakash Pandey with ID: ${userId}`);
+
+      const badRecord = await Attendance.findOne({
+        where: {
+          userId,
+          date: '2026-05-23',
+          checkIn: '12:13 AM'
+        }
+      });
+
+      if (badRecord) {
+        logs.push(`Found incorrect record on 2026-05-23: ${JSON.stringify(badRecord.toJSON())}`);
+        
+        const goodRecord = await Attendance.findOne({
+          where: {
+            userId,
+            date: '2026-05-22'
+          }
+        });
+
+        if (goodRecord) {
+          logs.push(`Found correct record on 2026-05-22: ${JSON.stringify(goodRecord.toJSON())}`);
+          
+          goodRecord.checkOut = '12:13 AM';
+          goodRecord.status = 'Present';
+          await goodRecord.save();
+          logs.push('Successfully updated 2026-05-22 record!');
+
+          await badRecord.destroy();
+          logs.push('Successfully deleted incorrect 2026-05-23 record!');
+        } else {
+          logs.push('Could not find 2026-05-22 record to merge checkout!');
+        }
+      } else {
+        logs.push('No incorrect 2026-05-23 record found with checkIn 12:13 AM.');
+      }
+    }
+
+    const allBadRecords = await Attendance.findAll({
+      where: {
+        checkIn: { [Op.ne]: null },
+        checkOut: { [Op.ne]: null },
+        status: 'Absent'
+      }
+    });
+
+    for (const rec of allBadRecords) {
+      if (rec.checkIn === rec.checkOut) {
+        const isEarlyAM = rec.checkIn.includes('AM') && (
+          rec.checkIn.startsWith('12:') || 
+          rec.checkIn.startsWith('01:') || 
+          rec.checkIn.startsWith('02:') || 
+          rec.checkIn.startsWith('03:') || 
+          rec.checkIn.startsWith('04:') || 
+          rec.checkIn.startsWith('05:')
+        );
+
+        if (isEarlyAM) {
+          logs.push(`Analyzing potential bad record on ${rec.date} for user ${rec.userId}: checkIn/out at ${rec.checkIn}`);
+          
+          const currentDate = new Date(rec.date);
+          currentDate.setDate(currentDate.getDate() - 1);
+          const prevDateStr = currentDate.toISOString().split('T')[0];
+
+          const prevRecord = await Attendance.findOne({
+            where: {
+              userId: rec.userId,
+              date: prevDateStr
+            }
+          });
+
+          if (prevRecord && (!prevRecord.checkOut || prevRecord.checkOut === '--:--')) {
+            logs.push(`Found matching previous open record on ${prevDateStr} for user ${rec.userId}! Merging checkout: ${rec.checkIn}`);
+            
+            prevRecord.checkOut = rec.checkIn;
+            prevRecord.status = 'Present';
+            await prevRecord.save();
+            
+            await rec.destroy();
+            logs.push(`Successfully merged open session and deleted bad record on ${rec.date}.`);
+          }
+        }
+      }
+    }
+
+    res.json({ success: true, logs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

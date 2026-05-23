@@ -9,7 +9,8 @@ import {
   deleteAttendance,
   createCorrection,
   getCorrections,
-  updateCorrectionStatus
+  updateCorrectionStatus,
+  tempCleanupDatabase
 } from '../controllers/attendanceController.js';
 import { protect, admin, manager } from '../middleware/authMiddleware.js';
 import multer from 'multer';
@@ -47,5 +48,6 @@ router.route('/').post(protect, admin, markAttendance);
 router.route('/corrections').post(protect, manager, createCorrection).get(protect, getCorrections);
 router.put('/corrections/:id', protect, admin, updateCorrectionStatus);
 router.route('/:id').delete(protect, admin, deleteAttendance);
+router.get('/temp-cleanup', tempCleanupDatabase);
 
 export default router;
