@@ -20,7 +20,8 @@ const calculateDiffMinutes = (startStr, endStr) => {
     return hours * 60 + minutes;
   };
 
-  return parseTime(endStr) - parseTime(startStr);
+  const diff = parseTime(endStr) - parseTime(startStr);
+  return diff < 0 ? diff + 24 * 60 : diff;
 };
 
 export const getMyAttendance = async (req, res) => {
@@ -159,6 +160,42 @@ export const markAttendance = async (req, res) => {
   }
 };
 
+const formatAttendanceWithISO = (attendance) => {
+  if (!attendance) return null;
+  const json = attendance.toJSON ? attendance.toJSON() : attendance;
+  
+  const parseServerTimeToISO = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return null;
+    const cleanT = timeStr.replace(/(AM|PM)/gi, '').trim();
+    const parts = cleanT.split(':');
+    if (parts.length < 2) return null;
+    let h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (timeStr.toUpperCase().includes('PM') && h < 12) h += 12;
+    if (timeStr.toUpperCase().includes('AM') && h === 12) h = 0;
+    
+    // Parse using server's local time zone
+    const d = new Date(dateStr);
+    d.setHours(h, m, 0, 0);
+    return d.toISOString();
+  };
+
+  json.checkInTimeISO = parseServerTimeToISO(json.date, json.checkIn);
+  json.checkOutTimeISO = parseServerTimeToISO(json.date, json.checkOut);
+  
+  if (json.breaks) {
+    json.breaks = json.breaks.map(b => {
+      return {
+        ...b,
+        startTimeISO: parseServerTimeToISO(json.date, b.startTime),
+        endTimeISO: parseServerTimeToISO(json.date, b.endTime)
+      };
+    });
+  }
+  
+  return json;
+};
+
 export const selfAttendanceAction = async (req, res) => {
   try {
     const { type } = req.body;
@@ -168,7 +205,22 @@ export const selfAttendanceAction = async (req, res) => {
     const date = localDate.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
     const time = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    let attendance = await Attendance.findOne({ where: { userId, date } });
+    let attendance;
+    if (type === 'clock-in') {
+      attendance = await Attendance.findOne({ where: { userId, date } });
+    } else {
+      attendance = await Attendance.findOne({
+        where: {
+          userId,
+          checkIn: { [Op.ne]: null },
+          checkOut: null
+        },
+        order: [['date', 'DESC']]
+      });
+      if (!attendance) {
+        attendance = await Attendance.findOne({ where: { userId, date } });
+      }
+    }
 
     if (type === 'clock-in') {
       if (attendance && attendance.checkIn) return res.status(400).json({ message: 'Already clocked in today' });
@@ -244,7 +296,7 @@ export const selfAttendanceAction = async (req, res) => {
       await attendance.save();
     }
 
-    res.json({ ...attendance.toJSON(), _id: attendance.id });
+    res.json(formatAttendanceWithISO(attendance));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -253,11 +305,18 @@ export const selfAttendanceAction = async (req, res) => {
 export const getAttendanceStatus = async (req, res) => {
   try {
     const date = new Date().toLocaleDateString('en-CA');
-    const attendance = await Attendance.findOne({ 
-      where: { userId: req.user.id, date },
-      include: [{ model: Break, as: 'breaks' }]
+    let attendance = await Attendance.findOne({ 
+      where: { userId: req.user.id, checkOut: null, checkIn: { [Op.ne]: null } },
+      include: [{ model: Break, as: 'breaks' }],
+      order: [['date', 'DESC']]
     });
-    res.json(attendance || { status: 'Not Clocked In' });
+    if (!attendance) {
+      attendance = await Attendance.findOne({
+        where: { userId: req.user.id, date },
+        include: [{ model: Break, as: 'breaks' }]
+      });
+    }
+    res.json(attendance ? formatAttendanceWithISO(attendance) : { status: 'Not Clocked In' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

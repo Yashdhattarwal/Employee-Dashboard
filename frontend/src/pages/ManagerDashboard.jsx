@@ -36,13 +36,13 @@ const ManagerDashboard = () => {
   const [submittingEod, setSubmittingEod] = useState(false);
   const [liveTime, setLiveTime] = useState({ work: 0, break: 0 });
 
-  const parseTimeToDate = (timeStr) => {
+  const parseTimeToDate = (timeStr, recordDate) => {
     if (!timeStr) return null;
     const [time, modifier] = timeStr.split(' ');
     let [hours, minutes] = time.split(':');
     if (hours === '12') hours = '00';
     if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-    const d = new Date();
+    const d = recordDate ? new Date(recordDate) : new Date();
     d.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
     return d;
   };
@@ -55,7 +55,9 @@ const ManagerDashboard = () => {
 
     const timer = setInterval(() => {
       const now = new Date();
-      const checkInDate = parseTimeToDate(attendance.checkIn);
+      const checkInDate = attendance.checkInTimeISO 
+        ? new Date(attendance.checkInTimeISO) 
+        : parseTimeToDate(attendance.checkIn, attendance.date);
       if (!checkInDate) return;
 
       let totalBreakMs = (attendance.breaks || []).reduce((acc, b) => {
@@ -67,7 +69,9 @@ const ManagerDashboard = () => {
       if (attendance.status === 'On Break') {
         const activeBreak = attendance.breaks?.find(b => !b.endTime);
         if (activeBreak) {
-          const breakStartDate = parseTimeToDate(activeBreak.startTime);
+          const breakStartDate = activeBreak.startTimeISO 
+            ? new Date(activeBreak.startTimeISO) 
+            : parseTimeToDate(activeBreak.startTime, attendance.date);
           if (breakStartDate) {
             currentBreakMs = Math.max(0, now - breakStartDate);
           }
