@@ -6,6 +6,8 @@ import { Ticket } from '../models/Ticket.js';
 import Leave from '../models/Leave.js';
 import Expense from '../models/Expense.js';
 import Payroll from '../models/Payroll.js';
+import Break from '../models/Break.js';
+
 
 export const createUser = async (req, res) => {
   try {
@@ -216,6 +218,35 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+const calculateWorkingHours = (attendance) => {
+  if (!attendance.checkIn || !attendance.checkOut) return null;
+  
+  const parseTime = (t) => {
+    let hours, minutes;
+    if (t.includes('AM') || t.includes('PM')) {
+      const [time, modifier] = t.split(' ');
+      const [hStr, mStr] = time.split(':');
+      hours = parseInt(hStr, 10);
+      minutes = parseInt(mStr, 10);
+      if (modifier === 'PM' && hours < 12) hours += 12;
+      if (modifier === 'AM' && hours === 12) hours = 0;
+    } else {
+      const [hStr, mStr] = t.split(':');
+      hours = parseInt(hStr, 10);
+      minutes = parseInt(mStr, 10);
+    }
+    return hours * 60 + minutes;
+  };
+
+  const diff = parseTime(attendance.checkOut) - parseTime(attendance.checkIn);
+  const elapsedMinutes = diff < 0 ? diff + 24 * 60 : diff;
+  
+  const breakMinutes = (attendance.breaks || []).reduce((acc, b) => acc + (b.durationMinutes || 0), 0);
+  const actualWorkMinutes = Math.max(0, elapsedMinutes - breakMinutes);
+  
+  return (actualWorkMinutes / 60).toFixed(2);
+};
+
 export const getDashboardStats = async (req, res) => {
   try {
     const isAdmin = req.user.role === 'admin';
@@ -277,7 +308,10 @@ export const getDashboardStats = async (req, res) => {
     const presentListFilter = isAdmin ? { date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } } : { userId: { [Op.in]: subordinateIds }, date: today, status: { [Op.in]: ['Present', 'Checked In', 'Checked Out'] } };
     const presentList = await Attendance.findAll({
       where: presentListFilter,
-      include: [{ model: User, as: 'user', attributes: ['name', 'employeeId'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['name', 'employeeId'] },
+        { model: Break, as: 'breaks' }
+      ],
       order: [['checkIn', 'ASC']]
     });
 
@@ -319,7 +353,14 @@ export const getDashboardStats = async (req, res) => {
       pendingTickets,
       attendanceTrend,
       recentLeaves: recentLeaves.map(l => ({ ...l.toJSON(), _id: l.id })),
-      presentList: presentList.map(a => ({ ...a.toJSON(), _id: a.id })),
+      presentList: presentList.map(a => {
+        const json = a.toJSON();
+        return {
+          ...json,
+          _id: a.id,
+          workingHours: calculateWorkingHours(json)
+        };
+      }),
       staffList: staffList.map(u => ({ ...u.toJSON(), _id: u.id })),
       leavesList: leavesList.map(a => ({ ...a.toJSON(), _id: a.id })),
       ticketsList: ticketsList.map(t => ({ ...t.toJSON(), _id: t.id }))

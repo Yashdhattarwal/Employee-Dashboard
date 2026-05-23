@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Coffee, LogOut, CheckCircle, Users, Calendar, Ticket, X, UserCheck } from 'lucide-react';
+import { Clock, Coffee, LogOut, CheckCircle, Users, Calendar, Ticket, X, UserCheck, Download, FileText } from 'lucide-react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -35,6 +35,8 @@ const ManagerDashboard = () => {
   });
   const [submittingEod, setSubmittingEod] = useState(false);
   const [liveTime, setLiveTime] = useState({ work: 0, break: 0 });
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [selectedEodRecord, setSelectedEodRecord] = useState(null);
 
   const parseTimeToDate = (timeStr, recordDate) => {
     if (!timeStr) return null;
@@ -48,8 +50,29 @@ const ManagerDashboard = () => {
   };
 
   useEffect(() => {
-    if (!attendance || attendance.status === 'Checked Out') {
+    if (!attendance) {
       setLiveTime({ work: 0, break: 0 });
+      return;
+    }
+
+    if (attendance.status === 'Checked Out' || attendance.checkOut) {
+      // Calculate final static working time
+      const checkInDate = attendance.checkInTimeISO 
+        ? new Date(attendance.checkInTimeISO) 
+        : parseTimeToDate(attendance.checkIn, attendance.date);
+      const checkOutDate = attendance.checkOutTimeISO
+        ? new Date(attendance.checkOutTimeISO)
+        : parseTimeToDate(attendance.checkOut, attendance.date);
+
+      if (checkInDate && checkOutDate) {
+        const totalBreakMs = (attendance.breaks || []).reduce((acc, b) => {
+          if (b.durationMinutes) return acc + (b.durationMinutes * 60000);
+          return acc;
+        }, 0);
+        const totalElapsed = Math.max(0, checkOutDate - checkInDate);
+        const workingMs = Math.max(0, totalElapsed - totalBreakMs);
+        setLiveTime({ work: workingMs, break: 0 });
+      }
       return;
     }
 
@@ -160,6 +183,7 @@ const ManagerDashboard = () => {
       setShowEodModal(false);
       setEodData({ workDone: '', pendingTasks: '', attachment: null });
       fetchStatus();
+      setShowSuccessAlert(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Clock out failed');
     } finally {
@@ -178,6 +202,18 @@ const ManagerDashboard = () => {
           <p className="text-xs text-slate-500 font-medium">Reporting to: {user?.managerName || 'N/A'}</p>
         </div>
       </div>
+      
+      {showSuccessAlert && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 px-4 py-3 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300 shadow-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={18} className="text-emerald-500" />
+            <span className="font-semibold text-sm">Clocked-out Successfully! Have a great evening!</span>
+          </div>
+          <button onClick={() => setShowSuccessAlert(false)} className="hover:bg-emerald-500/10 p-1 rounded-full transition-all text-emerald-500">
+            <X size={16} />
+          </button>
+        </div>
+      )}
       
       <div className="glass-panel p-6">
         <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -224,7 +260,7 @@ const ManagerDashboard = () => {
                   </button>
                 ) : (
                   <button 
-                    disabled={attendance.status === 'Checked Out'}
+                    disabled={attendance.status === 'Checked Out' || !!attendance.checkOut}
                     onClick={() => handleAction('break-in')}
                     className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-all disabled:opacity-50"
                   >
@@ -234,7 +270,7 @@ const ManagerDashboard = () => {
                 )}
 
                 <button 
-                  disabled={attendance.status === 'Checked Out'}
+                  disabled={attendance.status === 'Checked Out' || !!attendance.checkOut}
                   onClick={() => handleAction('clock-out')}
                   className="flex items-center gap-2 px-6 py-3 bg-danger text-white rounded-xl font-semibold hover:bg-danger/90 transition-all disabled:opacity-50"
                 >
@@ -444,7 +480,7 @@ const ManagerDashboard = () => {
                         <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Clock In</th>
                         <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Clock Out</th>
                         <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Working Hours</th>
-                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Status</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">EOD Report</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -460,13 +496,17 @@ const ManagerDashboard = () => {
                           <td className="py-4 text-sm font-medium text-slate-600 font-mono">{entry.checkOut || '-'}</td>
                           <td className="py-4 text-sm font-bold text-primary font-mono">{entry.workingHours ? `${entry.workingHours} hrs` : '-'}</td>
                           <td className="py-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                              entry.status === 'Present' ? 'bg-success/15 text-success' :
-                              entry.status === 'Checked In' ? 'bg-primary/15 text-primary' :
-                              entry.status === 'Checked Out' ? 'bg-slate-100 text-slate-600' : 'bg-warning/15 text-warning'
-                            }`}>
-                              {entry.status}
-                            </span>
+                            {entry.eodWork ? (
+                              <button
+                                onClick={() => setSelectedEodRecord(entry)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition-all shadow-sm"
+                              >
+                                <FileText size={12} />
+                                View Report
+                              </button>
+                            ) : (
+                              <span className="text-slate-400 text-xs font-medium">-</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -712,6 +752,81 @@ const ManagerDashboard = () => {
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
               <button 
                 onClick={() => setShowTicketsModal(false)}
+                className="btn-secondary px-6"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* View EOD Modal */}
+      {selectedEodRecord && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary p-6 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <CheckCircle size={24} />
+                  EOD Report Details
+                </h2>
+                <p className="text-primary-foreground/80 text-xs mt-1">
+                  Submitted by {selectedEodRecord.user?.name} ({selectedEodRecord.user?.employeeId})
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedEodRecord(null)}
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs font-semibold text-slate-600">
+                <div>
+                  <p className="text-slate-400 uppercase tracking-wider">Date</p>
+                  <p className="text-slate-800 text-sm mt-0.5">{selectedEodRecord.date}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 uppercase tracking-wider">Working Hours</p>
+                  <p className="text-slate-800 text-sm mt-0.5">{selectedEodRecord.workingHours ? `${selectedEodRecord.workingHours} hrs` : '-'}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-slate-700 mb-1">Work Done Today</h3>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap min-h-[80px]">
+                  {selectedEodRecord.eodWork || 'No work description entered.'}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-slate-700 mb-1">Pending Tasks for Tomorrow</h3>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap min-h-[60px]">
+                  {selectedEodRecord.pendingTasks || 'No pending tasks.'}
+                </div>
+              </div>
+
+              {selectedEodRecord.eodAttachment && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-700 mb-1.5">Attachment</h3>
+                  <a 
+                    href={selectedEodRecord.eodAttachment} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all"
+                  >
+                    <Download size={14} />
+                    View / Download Attachment
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button 
+                onClick={() => setSelectedEodRecord(null)}
                 className="btn-secondary px-6"
               >
                 Close

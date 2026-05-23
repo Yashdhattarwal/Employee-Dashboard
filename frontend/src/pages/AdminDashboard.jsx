@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Calendar, Ticket, Check, X, Clock } from 'lucide-react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
 const AdminDashboard = () => {
@@ -34,6 +34,7 @@ const AdminDashboard = () => {
     expenseCount: 0
   });
   const [finLoading, setFinLoading] = useState(false);
+  const [selectedEodRecord, setSelectedEodRecord] = useState(null);
 
   const fetchStats = async () => {
     try {
@@ -321,7 +322,7 @@ const AdminDashboard = () => {
                         <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Clock In</th>
                         <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Clock Out</th>
                         <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Working Hours</th>
-                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">Status</th>
+                        <th className="pb-3 text-xs font-bold text-slate-400 uppercase">EOD Report</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -337,13 +338,17 @@ const AdminDashboard = () => {
                           <td className="py-4 text-sm font-medium text-slate-600 font-mono">{entry.checkOut || '-'}</td>
                           <td className="py-4 text-sm font-bold text-primary font-mono">{entry.workingHours ? `${entry.workingHours} hrs` : '-'}</td>
                           <td className="py-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                              entry.status === 'Present' ? 'bg-success/15 text-success' :
-                              entry.status === 'Checked In' ? 'bg-primary/15 text-primary' :
-                              entry.status === 'Checked Out' ? 'bg-slate-100 text-slate-600' : 'bg-warning/15 text-warning'
-                            }`}>
-                              {entry.status}
-                            </span>
+                            {entry.eodWork ? (
+                              <button
+                                onClick={() => setSelectedEodRecord(entry)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition-all shadow-sm"
+                              >
+                                <FileText size={12} />
+                                View Report
+                              </button>
+                            ) : (
+                              <span className="text-slate-400 text-xs font-medium">-</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -589,6 +594,81 @@ const AdminDashboard = () => {
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end shrink-0">
               <button 
                 onClick={() => setShowTicketsModal(false)}
+                className="btn-secondary px-6"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* View EOD Modal */}
+      {selectedEodRecord && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary p-6 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <CheckCircle size={24} />
+                  EOD Report Details
+                </h2>
+                <p className="text-primary-foreground/80 text-xs mt-1">
+                  Submitted by {selectedEodRecord.user?.name} ({selectedEodRecord.user?.employeeId})
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedEodRecord(null)}
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs font-semibold text-slate-600">
+                <div>
+                  <p className="text-slate-400 uppercase tracking-wider">Date</p>
+                  <p className="text-slate-800 text-sm mt-0.5">{selectedEodRecord.date}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 uppercase tracking-wider">Working Hours</p>
+                  <p className="text-slate-800 text-sm mt-0.5">{selectedEodRecord.workingHours ? `${selectedEodRecord.workingHours} hrs` : '-'}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-slate-700 mb-1">Work Done Today</h3>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap min-h-[80px]">
+                  {selectedEodRecord.eodWork || 'No work description entered.'}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-slate-700 mb-1">Pending Tasks for Tomorrow</h3>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap min-h-[60px]">
+                  {selectedEodRecord.pendingTasks || 'No pending tasks.'}
+                </div>
+              </div>
+
+              {selectedEodRecord.eodAttachment && (
+                <div>
+                  <h3 className="text-sm font-bold text-slate-700 mb-1.5">Attachment</h3>
+                  <a 
+                    href={selectedEodRecord.eodAttachment} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all"
+                  >
+                    <Download size={14} />
+                    View / Download Attachment
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button 
+                onClick={() => setSelectedEodRecord(null)}
                 className="btn-secondary px-6"
               >
                 Close

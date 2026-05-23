@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Coffee, LogOut, CheckCircle } from 'lucide-react';
+import { Clock, Coffee, LogOut, CheckCircle, X } from 'lucide-react';
 import axios from 'axios';
 
 import { AuthContext } from '../context/AuthContext';
@@ -20,6 +20,7 @@ const EmployeeDashboard = () => {
   });
   const [submittingEod, setSubmittingEod] = useState(false);
   const [liveTime, setLiveTime] = useState({ work: 0, break: 0 });
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   const parseTimeToDate = (timeStr, recordDate) => {
     if (!timeStr) return null;
@@ -33,8 +34,29 @@ const EmployeeDashboard = () => {
   };
 
   useEffect(() => {
-    if (!attendance || attendance.status === 'Checked Out') {
+    if (!attendance) {
       setLiveTime({ work: 0, break: 0 });
+      return;
+    }
+
+    if (attendance.status === 'Checked Out' || attendance.checkOut) {
+      // Calculate final static working time
+      const checkInDate = attendance.checkInTimeISO 
+        ? new Date(attendance.checkInTimeISO) 
+        : parseTimeToDate(attendance.checkIn, attendance.date);
+      const checkOutDate = attendance.checkOutTimeISO
+        ? new Date(attendance.checkOutTimeISO)
+        : parseTimeToDate(attendance.checkOut, attendance.date);
+
+      if (checkInDate && checkOutDate) {
+        const totalBreakMs = (attendance.breaks || []).reduce((acc, b) => {
+          if (b.durationMinutes) return acc + (b.durationMinutes * 60000);
+          return acc;
+        }, 0);
+        const totalElapsed = Math.max(0, checkOutDate - checkInDate);
+        const workingMs = Math.max(0, totalElapsed - totalBreakMs);
+        setLiveTime({ work: workingMs, break: 0 });
+      }
       return;
     }
 
@@ -165,6 +187,7 @@ const EmployeeDashboard = () => {
       setEodData({ workDone: '', pendingTasks: '', attachment: null });
       fetchStatus();
       fetchActivities();
+      setShowSuccessAlert(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Clock out failed');
     } finally {
@@ -183,6 +206,18 @@ const EmployeeDashboard = () => {
           <p className="text-xs text-slate-500 font-medium">Reporting to: {user?.managerName || 'N/A'}</p>
         </div>
       </div>
+      
+      {showSuccessAlert && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 px-4 py-3 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300 shadow-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={18} className="text-emerald-500" />
+            <span className="font-semibold text-sm">Clocked-out Successfully! Have a great evening!</span>
+          </div>
+          <button onClick={() => setShowSuccessAlert(false)} className="hover:bg-emerald-500/10 p-1 rounded-full transition-all text-emerald-500">
+            <X size={16} />
+          </button>
+        </div>
+      )}
       
       {/* Attendance Actions Box */}
       <div className="glass-panel p-6">
@@ -247,7 +282,7 @@ const EmployeeDashboard = () => {
                   </button>
                 ) : (
                   <button 
-                    disabled={attendance.status === 'Checked Out'}
+                    disabled={attendance.status === 'Checked Out' || !!attendance.checkOut}
                     onClick={() => handleAction('break-in')}
                     className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-all disabled:opacity-50"
                   >
@@ -257,7 +292,7 @@ const EmployeeDashboard = () => {
                 )}
 
                 <button 
-                  disabled={attendance.status === 'Checked Out'}
+                  disabled={attendance.status === 'Checked Out' || !!attendance.checkOut}
                   onClick={() => handleAction('clock-out')}
                   className="flex items-center gap-2 px-6 py-3 bg-danger text-white rounded-xl font-semibold hover:bg-danger/90 transition-all disabled:opacity-50"
                 >
