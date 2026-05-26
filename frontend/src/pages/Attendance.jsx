@@ -44,15 +44,15 @@ const Attendance = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data } = await axios.get('/api/attendance/my', { withCredentials: true });
       setRecords(data);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -140,6 +140,12 @@ const Attendance = () => {
 
   useEffect(() => {
     fetchAttendance();
+
+    const interval = setInterval(() => {
+      fetchAttendance(true);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

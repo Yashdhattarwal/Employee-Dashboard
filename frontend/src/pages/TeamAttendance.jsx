@@ -110,9 +110,9 @@ const TeamManagement = () => {
 
   const [corrections, setCorrections] = useState([]);
 
-  const fetchData = async () => {
+  const fetchData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       let empEndpoint = '/api/users';
       let attEndpoint = '/api/attendance/all';
       
@@ -135,12 +135,18 @@ const TeamManagement = () => {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to load team data. Please check your connection.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
+
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [user.role]);
 
   const handleSaveRecord = async (e) => {
