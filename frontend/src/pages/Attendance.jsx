@@ -26,6 +26,19 @@ const isLateCheckIn = (checkInStr, shiftTimeStr) => {
   return checkInMin > shiftMin;
 };
 
+const formatDateWithDay = (dateStr) => {
+  if (!dateStr) return '-';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  const dateObj = new Date(year, month, day);
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = days[dateObj.getDay()];
+  return `${dateStr} (${dayName})`;
+};
+
 const Attendance = () => {
   const { user } = useContext(AuthContext);
   const [records, setRecords] = useState([]);
@@ -170,7 +183,7 @@ const Attendance = () => {
                   <td className="table-cell font-medium text-slate-600">
                     <div className="flex items-center gap-2">
                       <Calendar size={14} className="text-slate-400" />
-                      {r.date}
+                      {formatDateWithDay(r.date)}
                     </div>
                   </td>
                   <td className="table-cell">

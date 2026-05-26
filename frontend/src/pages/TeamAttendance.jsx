@@ -25,6 +25,19 @@ const isLateCheckIn = (checkInStr, shiftTimeStr) => {
   return checkInMin > shiftMin;
 };
 
+const formatDateWithDay = (dateStr) => {
+  if (!dateStr) return '-';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  const dateObj = new Date(year, month, day);
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = days[dateObj.getDay()];
+  return `${dateStr} (${dayName})`;
+};
+
 const TeamManagement = () => {
   const { user } = useContext(AuthContext);
   const [employees, setEmployees] = useState([]);
@@ -484,7 +497,7 @@ const TeamManagement = () => {
               <tbody>
                 {recordsWithPenalties.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
-                    <td className="table-cell font-medium text-slate-600">{r.date}</td>
+                    <td className="table-cell font-medium text-slate-600">{formatDateWithDay(r.date)}</td>
                     <td className="table-cell">
                       <div className="flex flex-col">
                         <span className="text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</span>

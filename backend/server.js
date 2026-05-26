@@ -135,6 +135,10 @@ const startServer = async () => {
     console.log(`Server running on port ${PORT}`);
     await seedAdmin();
     
+    // Update historical Sunday records to Weekoff
+    const { updateExistingSundayRecords } = await import('./services/shiftService.js');
+    await updateExistingSundayRecords();
+    
     // Check shift absences periodically (every 10 minutes)
     setInterval(processShiftAbsences, 10 * 60 * 1000);
     // Also run an immediate check on startup
