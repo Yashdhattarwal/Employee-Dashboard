@@ -42,6 +42,7 @@ export const loginUser = async (req, res) => {
         employmentType: user.employmentType,
         managerName: user.manager?.name || 'N/A',
         firstTimeLogin: user.firstTimeLogin,
+        shiftTime: user.shiftTime,
         token
       });
     } else {

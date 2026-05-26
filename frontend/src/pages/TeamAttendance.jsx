@@ -265,7 +265,8 @@ const TeamManagement = () => {
   const getMonthlyBreakStats = (recs) => {
     if (!recs || recs.length === 0) return { recordsWithPenalties: [], totalPenaltyDays: 0 };
     let totalBreaksInMonth = 0;
-    const recordsWithPenalties = recs.map(r => {
+    const sorted = [...recs].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const recordsWithPenalties = sorted.map(r => {
       const dailyBreaks = r.breaks || [];
       const updatedBreaks = dailyBreaks.map(b => {
         totalBreaksInMonth++;
@@ -276,7 +277,8 @@ const TeamManagement = () => {
     });
 
     const totalPenaltyDays = recordsWithPenalties.reduce((acc, r) => acc + r.dailyPenalty, 0);
-    return { recordsWithPenalties, totalPenaltyDays };
+    const sortedDescending = [...recordsWithPenalties].sort((a, b) => new Date(b.date) - new Date(a.date));
+    return { recordsWithPenalties: sortedDescending, totalPenaltyDays };
   };
 
   const { recordsWithPenalties, totalPenaltyDays } = getMonthlyBreakStats(employeeRecords);
@@ -541,6 +543,7 @@ const TeamManagement = () => {
                         r.status === 'Present' ? 'bg-success/10 text-success' :
                         r.status === 'On Break' ? 'bg-amber-500/10 text-amber-600' :
                         r.status === 'Checked Out' ? 'bg-slate-500/10 text-slate-600' :
+                        r.status === 'Weekoff' ? 'bg-indigo-500/10 text-indigo-600' :
                         'bg-danger/10 text-danger'
                       }`}>
                         {r.status}

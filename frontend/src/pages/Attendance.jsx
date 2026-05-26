@@ -123,7 +123,8 @@ const Attendance = () => {
     });
 
     const totalPenaltyDays = recordsWithPenalties.reduce((acc, r) => acc + r.dailyPenalty, 0);
-    return { recordsWithPenalties, totalPenaltyDays };
+    const sortedDescending = [...recordsWithPenalties].sort((a, b) => new Date(b.date) - new Date(a.date));
+    return { recordsWithPenalties: sortedDescending, totalPenaltyDays };
   };
 
   const { recordsWithPenalties, totalPenaltyDays } = getMonthlyBreakStats(records);
@@ -226,9 +227,10 @@ const Attendance = () => {
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                       r.status === 'On Leave' ? 'bg-amber-500/10 text-amber-600' :
                       r.status === 'Absent' ? 'bg-danger/10 text-danger' :
+                      r.status === 'Weekoff' ? 'bg-indigo-500/10 text-indigo-600' :
                       'bg-success/10 text-success'
                     }`}>
-                      {r.status === 'On Leave' ? 'On Leave' : r.status === 'Absent' ? 'Absent' : 'Present'}
+                      {r.status === 'On Leave' ? 'On Leave' : r.status === 'Absent' ? 'Absent' : r.status === 'Weekoff' ? 'Weekoff' : 'Present'}
                     </span>
                   </td>
                   <td className="table-cell">
@@ -236,6 +238,7 @@ const Attendance = () => {
                       r.status === 'Present' ? 'bg-success/10 text-success' :
                       r.status === 'On Break' ? 'bg-amber-500/10 text-amber-600' :
                       r.status === 'Checked Out' ? 'bg-slate-500/10 text-slate-600' :
+                      r.status === 'Weekoff' ? 'bg-indigo-500/10 text-indigo-600' :
                       'bg-danger/10 text-danger'
                     }`}>
                       {r.status}
