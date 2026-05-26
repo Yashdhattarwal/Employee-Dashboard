@@ -432,3 +432,30 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      include: [{ model: User, as: 'manager', attributes: ['name'] }]
+    });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    res.json({
+      _id: user.id,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      employeeId: user.employeeId,
+      designation: user.designation,
+      employmentType: user.employmentType,
+      managerName: user.manager?.name || 'N/A',
+      profilePhoto: user.profilePhoto,
+      firstTimeLogin: user.firstTimeLogin,
+      shiftTime: user.shiftTime,
+      shiftEndTime: user.shiftEndTime
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -8,11 +8,23 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo');
-    if (userInfo) {
-      setUser(JSON.parse(userInfo));
-    }
-    setLoading(false);
+    const loadUser = async () => {
+      const userInfo = localStorage.getItem('userInfo');
+      if (userInfo) {
+        const parsed = JSON.parse(userInfo);
+        setUser(parsed);
+        try {
+          const { data } = await axios.get('/api/users/profile');
+          const merged = { ...parsed, ...data };
+          setUser(merged);
+          localStorage.setItem('userInfo', JSON.stringify(merged));
+        } catch (err) {
+          console.error('Error auto-fetching updated user profile:', err.message);
+        }
+      }
+      setLoading(false);
+    };
+    loadUser();
   }, []);
 
   const login = async (email, password) => {

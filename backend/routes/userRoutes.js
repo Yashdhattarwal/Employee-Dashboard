@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { createUser, getUsers, getTeamMembers, updateUserStatus, updateUser, updateProfile, getDashboardStats, getFinancialStats, deleteUser } from '../controllers/userController.js';
+import { createUser, getUsers, getTeamMembers, updateUserStatus, updateUser, updateProfile, getDashboardStats, getFinancialStats, deleteUser, getProfile } from '../controllers/userController.js';
 import { protect, admin, manager } from '../middleware/authMiddleware.js';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -28,6 +28,7 @@ const router = express.Router();
 
 router.get('/stats', protect, getDashboardStats);
 router.get('/financial-stats', protect, admin, getFinancialStats);
+router.get('/profile', protect, getProfile);
 router.put('/profile', protect, upload.single('profilePhoto'), updateProfile);
 router.route('/').post(protect, admin, upload.single('profilePhoto'), createUser).get(protect, admin, getUsers);
 router.route('/team').get(protect, manager, getTeamMembers);
