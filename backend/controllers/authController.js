@@ -89,14 +89,10 @@ export const loginUser = async (req, res) => {
 export const logoutUser = async (req, res) => {
   try {
     if (req.user) {
-      const activeSession = await UserSessionLog.findOne({
-        where: { userId: req.user.id, logoutTime: null },
-        order: [['loginTime', 'DESC']]
-      });
-      if (activeSession) {
-        activeSession.logoutTime = new Date();
-        await activeSession.save();
-      }
+      await UserSessionLog.update(
+        { logoutTime: new Date() },
+        { where: { userId: req.user.id, logoutTime: null } }
+      );
     }
   } catch (err) {
     console.error('Logout logging failed:', err.message);
@@ -107,6 +103,21 @@ export const logoutUser = async (req, res) => {
     expires: new Date(0),
   });
   res.status(200).json({ message: 'User logged out' });
+};
+
+export const endSession = async (req, res) => {
+  try {
+    if (req.user) {
+      await UserSessionLog.update(
+        { logoutTime: new Date() },
+        { where: { userId: req.user.id, logoutTime: null } }
+      );
+    }
+    res.status(200).json({ message: 'Session ended successfully' });
+  } catch (err) {
+    console.error('Session ending failed:', err.message);
+    res.status(500).json({ message: err.message });
+  }
 };
 
 export const changePassword = async (req, res) => {

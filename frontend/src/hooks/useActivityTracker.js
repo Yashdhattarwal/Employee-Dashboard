@@ -82,11 +82,16 @@ const useActivityTracker = () => {
       isSystemActive.current = true;
     };
 
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon('/api/auth/session-end');
+    };
+
     // Attach local events
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('keydown', handleKeyDown, { passive: true });
     window.addEventListener('click', handleClick, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     // --- UN-THROTTLED INLINE WEB WORKER HEARTBEAT ---
     const workerCode = `
@@ -146,6 +151,7 @@ const useActivityTracker = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleClick);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
 
       // Cleanup worker
       if (workerRef.current) {

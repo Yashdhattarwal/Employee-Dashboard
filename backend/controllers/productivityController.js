@@ -249,6 +249,38 @@ export const getDetailedAnalytics = async (req, res) => {
 
     const todayStr = new Date().toLocaleDateString('en-CA');
 
+    // Auto-close stale sessions (browser or tab closed means session end)
+    const activeSessions = await UserSessionLog.findAll({
+      where: { userId, logoutTime: null }
+    });
+
+    if (activeSessions.length > 0) {
+      const prodLog = await ProductivityLog.findOne({
+        where: { userId, date: todayStr }
+      });
+      const now = new Date();
+      let shouldClose = false;
+      let closeTime = now;
+
+      if (prodLog) {
+        const secondsSinceHeartbeat = (now - new Date(prodLog.lastHeartbeat)) / 1000;
+        if (secondsSinceHeartbeat > 45) {
+          shouldClose = true;
+          closeTime = prodLog.lastHeartbeat;
+        }
+      } else {
+        // No heartbeat record today at all, close it
+        shouldClose = true;
+      }
+
+      if (shouldClose) {
+        await UserSessionLog.update(
+          { logoutTime: closeTime },
+          { where: { userId, logoutTime: null } }
+        );
+      }
+    }
+
     // 1. Session logs
     const sessionLogs = await UserSessionLog.findAll({
       where: { userId },
