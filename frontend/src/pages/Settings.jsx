@@ -255,6 +255,36 @@ const Settings = () => {
         </div>
 
         <div className="mt-8 border-t border-slate-200 pt-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">Timezone Preference</h3>
+              <p className="text-sm text-slate-500">Select your preferred timezone for all platform timings</p>
+            </div>
+            <div className="w-full md:w-48">
+              <select 
+                value={user?.timezone || 'IST'}
+                onChange={async (e) => {
+                  const newTz = e.target.value;
+                  try {
+                    setMessage('');
+                    const { data } = await axios.put('/api/users/profile', { timezone: newTz }, { withCredentials: true });
+                    setUser(data);
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+                    setMessage('Timezone preference updated successfully!');
+                  } catch (err) {
+                    setMessage(err.response?.data?.message || 'Failed to update timezone');
+                  }
+                }}
+                className="input-field bg-white border border-slate-200 text-slate-800 font-bold"
+              >
+                <option value="IST">IST (Indian Standard Time)</option>
+                <option value="EST">EST (Eastern Standard Time)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-slate-200 pt-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-4">Change Password</h3>
           <div className="space-y-4">
             <div>

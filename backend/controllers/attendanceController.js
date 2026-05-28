@@ -31,7 +31,7 @@ export const getMyAttendance = async (req, res) => {
       include: [{ model: Break, as: 'breaks' }],
       order: [['date', 'DESC']]
     });
-    const mapped = attendance.map(a => ({ ...a.toJSON(), _id: a.id }));
+    const mapped = attendance.map(a => formatAttendanceWithISO(a));
     res.json(mapped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -52,7 +52,7 @@ export const getTeamAttendance = async (req, res) => {
       ],
       order: [['date', 'DESC']]
     });
-    const mapped = attendance.map(a => ({ ...a.toJSON(), _id: a.id }));
+    const mapped = attendance.map(a => formatAttendanceWithISO(a));
     res.json(mapped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -68,7 +68,7 @@ export const getAllAttendance = async (req, res) => {
       ],
       order: [['date', 'DESC']]
     });
-    const mapped = attendance.map(a => ({ ...a.toJSON(), _id: a.id }));
+    const mapped = attendance.map(a => formatAttendanceWithISO(a));
     res.json(mapped);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -154,7 +154,7 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    res.json({ ...attendance.toJSON(), _id: attendance.id });
+    res.json(formatAttendanceWithISO(attendance));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -184,6 +184,7 @@ const formatAttendanceWithISO = (attendance) => {
 
   json.checkInTimeISO = parseServerTimeToISO(json.date, json.checkIn);
   json.checkOutTimeISO = parseServerTimeToISO(json.date, json.checkOut);
+  json.pendingCheckOutTimeISO = parseServerTimeToISO(json.date, json.pendingCheckOut);
   
   if (json.breaks) {
     json.breaks = json.breaks.map(b => {

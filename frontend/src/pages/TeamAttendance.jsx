@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Calendar, Search, Filter, Plus, X, Edit2, Trash2, ChevronRight, User, ArrowLeft, Clock, CheckCircle, Coffee } from 'lucide-react';
+import { convertToUserTimezone } from '../utils/timezone';
 
 const isLateCheckIn = (checkInStr, shiftTimeStr) => {
   if (!checkInStr || !shiftTimeStr) return false;
@@ -508,7 +509,7 @@ const TeamManagement = () => {
                     <td className="table-cell font-medium text-slate-600">{formatDateWithDay(r.date)}</td>
                     <td className="table-cell">
                       <div className="flex flex-col">
-                        <span className="text-slate-600 font-medium text-success">{r.checkIn || '--:--'}</span>
+                        <span className="text-slate-600 font-medium text-success">{convertToUserTimezone(r.checkInTimeISO, r.checkIn, user?.timezone)}</span>
                         {r.checkIn && isLateCheckIn(r.checkIn, selectedEmployee?.shiftTime || '09:00 AM') && (
                           <span className="inline-block mt-1 text-[9px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded border border-danger/20 w-fit uppercase tracking-wider animate-pulse">
                             ⚠️ Late Login
@@ -516,7 +517,7 @@ const TeamManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="table-cell text-slate-600 font-medium text-danger">{r.checkOut || '--:--'}</td>
+                     <td className="table-cell text-slate-600 font-medium text-danger">{convertToUserTimezone(r.checkOutTimeISO, r.checkOut, user?.timezone)}</td>
                     <td className="table-cell">
                       {(() => {
                         const bStats = calculateBreakStats(r.breaks, selectedEmployee?.employmentType);
@@ -604,7 +605,7 @@ const TeamManagement = () => {
                       For: {c.user?.name} | Date: {c.date}
                     </p>
                     <span className="text-xs text-slate-400 font-medium">
-                      {new Date(c.createdAt).toLocaleString()}
+                      {convertToUserTimezone(c.createdAt, null, user?.timezone)}
                     </span>
                   </div>
                   <p className="text-slate-600 text-sm mt-2">"{c.comment}"</p>

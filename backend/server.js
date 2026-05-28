@@ -129,6 +129,16 @@ const startServer = async () => {
     }
   }
 
+  try {
+    const sequelizeInstance = (await import('./config/db.js')).default;
+    await sequelizeInstance.query("ALTER TABLE Users ADD COLUMN timezone VARCHAR(50) DEFAULT 'IST';");
+    console.log('Successfully checked timezone column on Users table.');
+  } catch (error) {
+    if (!error.message.includes('Duplicate column name') && !error.message.includes('already exists')) {
+      console.error('Migration notice (timezone):', error.message);
+    }
+  }
+
   const PORT = process.env.PORT || 5000;
 
   app.listen(PORT, async () => {

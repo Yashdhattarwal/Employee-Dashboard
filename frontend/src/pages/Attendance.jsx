@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Calendar, Clock, LogOut, CheckCircle } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useContext } from 'react';
+import { convertToUserTimezone } from '../utils/timezone';
 
 const isLateCheckIn = (checkInStr, shiftTimeStr) => {
   if (!checkInStr || !shiftTimeStr) return false;
@@ -197,7 +198,7 @@ const Attendance = () => {
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1.5 text-slate-700 font-medium">
                         <Clock size={14} className="text-success" />
-                        {r.checkIn || '-'}
+                        {convertToUserTimezone(r.checkInTimeISO, r.checkIn, user?.timezone)}
                       </div>
                       {r.checkIn && isLateCheckIn(r.checkIn, user?.shiftTime || '09:00 AM') && (
                         <span className="inline-block text-[9px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded border border-danger/20 w-fit uppercase tracking-wider animate-pulse">
@@ -209,7 +210,7 @@ const Attendance = () => {
                   <td className="table-cell">
                     <div className="flex items-center gap-1.5 text-slate-700">
                       <LogOut size={14} className="text-danger" />
-                      {r.checkOut || '-'}
+                      {convertToUserTimezone(r.checkOutTimeISO, r.checkOut, user?.timezone)}
                     </div>
                   </td>
                   <td className="table-cell font-bold text-slate-700">

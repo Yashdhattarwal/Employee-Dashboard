@@ -11,7 +11,7 @@ import Break from '../models/Break.js';
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, managerId, teamId, salaryINR, salaryUSD, salaryCurrency, bankName, accountHolderName, accountNumber, ifscCode, branchName, shiftTime, shiftEndTime, designation, employmentType } = req.body;
+    const { name, email, password, role, managerId, teamId, salaryINR, salaryUSD, salaryCurrency, bankName, accountHolderName, accountNumber, ifscCode, branchName, shiftTime, shiftEndTime, designation, employmentType, timezone } = req.body;
     const lowerEmail = email.toLowerCase();
 
     const userExists = await User.findOne({ where: { email: lowerEmail } });
@@ -61,7 +61,8 @@ export const createUser = async (req, res) => {
       shiftEndTime: shiftEndTime || '06:00 PM',
       designation: designation || null,
       employmentType: employmentType || 'Full-time',
-      profilePhoto: req.file ? `/uploads/profiles/${req.file.filename}` : null
+      profilePhoto: req.file ? `/uploads/profiles/${req.file.filename}` : null,
+      timezone: timezone || 'IST'
     });
 
     res.status(201).json({
@@ -122,7 +123,7 @@ export const updateUser = async (req, res) => {
       name, email, role, managerId, teamId,
       salaryINR, salaryUSD, salaryCurrency,
       bankName, accountHolderName, accountNumber, ifscCode, branchName,
-      password, shiftTime, shiftEndTime, designation, employmentType
+      password, shiftTime, shiftEndTime, designation, employmentType, timezone
     } = req.body;
 
     if (email) {
@@ -154,6 +155,7 @@ export const updateUser = async (req, res) => {
     if (shiftEndTime) user.shiftEndTime = shiftEndTime;
     if (designation !== undefined) user.designation = designation;
     if (employmentType) user.employmentType = employmentType;
+    if (timezone) user.timezone = timezone;
 
     if (password) {
       const isValid = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password) && !/\s/.test(password);
@@ -194,6 +196,10 @@ export const updateProfile = async (req, res) => {
       user.password = await bcrypt.hash(pwd, salt);
     }
 
+    if (req.body.timezone) {
+      user.timezone = req.body.timezone;
+    }
+
     await user.save();
 
     const updatedUser = await User.findByPk(user.id, {
@@ -212,6 +218,7 @@ export const updateProfile = async (req, res) => {
       managerName: updatedUser.manager?.name || 'N/A',
       profilePhoto: updatedUser.profilePhoto,
       firstTimeLogin: updatedUser.firstTimeLogin,
+      timezone: updatedUser.timezone,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -453,7 +460,8 @@ export const getProfile = async (req, res) => {
       profilePhoto: user.profilePhoto,
       firstTimeLogin: user.firstTimeLogin,
       shiftTime: user.shiftTime,
-      shiftEndTime: user.shiftEndTime
+      shiftEndTime: user.shiftEndTime,
+      timezone: user.timezone
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

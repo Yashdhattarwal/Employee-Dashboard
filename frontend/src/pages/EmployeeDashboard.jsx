@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import { AuthContext } from '../context/AuthContext';
 import { useContext } from 'react';
+import { convertToUserTimezone } from '../utils/timezone';
 
 const EmployeeDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -236,8 +237,8 @@ const EmployeeDashboard = () => {
                 </p>
                 <p className="text-xs text-amber-700 mt-1 font-medium">Your clock-out request has been logged but requires Admin approval because your working hours exceeded the standard late sign-out limit. Your productive time stopped immediately upon your checkout attempt.</p>
                 <div className="flex gap-4 mt-3 text-xs font-semibold text-slate-600">
-                  <span>Checked In: <strong className="text-slate-800">{attendance.checkIn}</strong></span>
-                  <span>Checked Out (Captured): <strong className="text-slate-800">{attendance.pendingCheckOut}</strong></span>
+                  <span>Checked In: <strong className="text-slate-800">{convertToUserTimezone(attendance.checkInTimeISO, attendance.checkIn, user?.timezone)}</strong></span>
+                  <span>Checked Out (Captured): <strong className="text-slate-800">{convertToUserTimezone(attendance.pendingCheckOutTimeISO, attendance.pendingCheckOut, user?.timezone)}</strong></span>
                 </div>
               </div>
               <span className="px-3 py-1.5 bg-amber-500/10 text-amber-600 text-xs font-bold rounded-full border border-amber-200/50 animate-pulse uppercase tracking-wider shrink-0">
@@ -257,7 +258,7 @@ const EmployeeDashboard = () => {
               <div className="flex-1 min-w-[200px] bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Status: <span className="text-slate-800 font-bold">{attendance.status}</span></p>
-                  <p className="text-sm text-slate-500 mt-1">Started at {attendance.checkIn}</p>
+                  <p className="text-sm text-slate-500 mt-1">Started at {convertToUserTimezone(attendance.checkInTimeISO, attendance.checkIn, user?.timezone)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-primary uppercase">Live Work Time</p>
@@ -340,7 +341,7 @@ const EmployeeDashboard = () => {
         <h2 className="text-lg font-semibold text-slate-800 mb-4">Recent Activity</h2>
         <div className="space-y-4">
           {activities.map((act, i) => {
-            const timeOfAction = act.checkIn || (act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+            const timeOfAction = convertToUserTimezone(act.checkInTimeISO, act.checkIn, user?.timezone);
             return (
               <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                 <div className="flex items-center gap-3">

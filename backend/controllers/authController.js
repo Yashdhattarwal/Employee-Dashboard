@@ -43,6 +43,7 @@ export const loginUser = async (req, res) => {
         managerName: user.manager?.name || 'N/A',
         firstTimeLogin: user.firstTimeLogin,
         shiftTime: user.shiftTime,
+        timezone: user.timezone,
         token
       });
     } else {

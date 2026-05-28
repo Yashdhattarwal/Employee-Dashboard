@@ -97,6 +97,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  timezone: {
+    type: DataTypes.STRING,
+    defaultValue: 'IST',
+  },
 });
 
 User.belongsTo(User, { as: 'manager', foreignKey: 'managerId' });
