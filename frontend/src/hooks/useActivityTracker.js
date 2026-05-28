@@ -125,10 +125,8 @@ const useActivityTracker = () => {
           if (activeFlag) {
             if (document.hasFocus() && document.visibilityState === 'visible') {
               activityDescription = window.location.pathname || 'Home';
-            } else if (isSystemActive.current) {
-              activityDescription = 'Working on Excel / Word / Desktop App';
             } else {
-              activityDescription = 'Active on External Browser Tab / YouTube';
+              activityDescription = 'Active on Desktop App / other Tab (Excel/ChatGPT/Word/etc.)';
             }
           } else {
             activityDescription = 'System Idle (No Input)';
