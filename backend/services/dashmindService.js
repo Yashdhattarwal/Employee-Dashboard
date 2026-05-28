@@ -410,6 +410,126 @@ export const processDashMindQuery = async (queryText, user) => {
       };
     }
 
+    // ==========================================
+    // 9. AUTOMATIC SELF-LEARNING ADAPTIVE COMPILER
+    // ==========================================
+    
+    // Step A: Detect target user dynamically by searching names in the User table
+    const allUsers = await User.findAll({ attributes: ['id', 'name', 'employeeId'] });
+    let matchedUser = null;
+    for (const u of allUsers) {
+      const nameParts = u.name.toLowerCase().split(/\s+/);
+      // Check if the query contains any part of their name (first name / last name)
+      if (nameParts.some(part => part.length > 2 && query.includes(part))) {
+        matchedUser = u;
+        break;
+      }
+    }
+
+    // Step B: If no user is matched, default to the current logged-in user for self-inquiry
+    const queryTargetUser = matchedUser || user;
+
+    // Step C: Strict RBAC Privacy Validation for dynamic inquiries
+    if (queryTargetUser.id !== user.id && user.role === 'employee') {
+      return {
+        authorized: false,
+        type: 'text',
+        speech: `Sorry, you are not authorized to access metrics for ${queryTargetUser.name}.`,
+        data: { text: `Sorry, you are not authorized to access metrics for **${queryTargetUser.name}**.` }
+      };
+    }
+    // Ensure TL/Managers are only querying members reporting to them
+    if (queryTargetUser.id !== user.id && user.role !== 'admin') {
+      if (!targetUserIds.includes(queryTargetUser.id)) {
+        return {
+          authorized: false,
+          type: 'text',
+          speech: `Sorry, you are not authorized to access information for ${queryTargetUser.name} as they are outside your reporting structure.`,
+          data: { text: `Sorry, you are not authorized to access information for **${queryTargetUser.name}**.` }
+        };
+      }
+    }
+
+    // Step D: Detect Date Bounds dynamically
+    let targetDateStr = todayStr;
+    let timeframeLabel = "today";
+    if (query.includes("yesterday")) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      targetDateStr = yesterday.toLocaleDateString('en-CA');
+      timeframeLabel = "yesterday";
+    }
+
+    // Step E: Match exact intent (e.g. logout time, login time, check-in, etc.)
+    const isLogoutIntent = /\b(logout|log out|logoff|logged out|checked out|checkout)\b/.test(query);
+    const isLoginIntent = /\b(login|log in|logon|logged in|checked in|checkin)\b/.test(query);
+    const isAttendanceStatus = /\b(attendance|status|present|absent)\b/.test(query);
+
+    if (isLogoutIntent) {
+      const record = await Attendance.findOne({
+        where: { userId: queryTargetUser.id, date: targetDateStr }
+      });
+      if (record && record.checkOut) {
+        return {
+          authorized: true,
+          type: 'text',
+          speech: `${queryTargetUser.name} logged out ${timeframeLabel} at ${record.checkOut}.`,
+          data: {
+            text: `### 🕒 Dynamic Logout Event Located\n\n* **Employee**: **${queryTargetUser.name}**\n* **Date / Timeframe**: ${timeframeLabel} (${targetDateStr})\n* **Logout Time**: **${record.checkOut}**\n* **Status**: Successfully Checked Out`
+          }
+        };
+      } else {
+        return {
+          authorized: true,
+          type: 'text',
+          speech: `No logout log found for ${queryTargetUser.name} ${timeframeLabel}.`,
+          data: {
+            text: `No logout log recorded for **${queryTargetUser.name}** on **${targetDateStr}** (${timeframeLabel}). They may still be clocked in or did not check out.`
+          }
+        };
+      }
+    }
+
+    if (isLoginIntent) {
+      const record = await Attendance.findOne({
+        where: { userId: queryTargetUser.id, date: targetDateStr }
+      });
+      if (record && record.checkIn) {
+        return {
+          authorized: true,
+          type: 'text',
+          speech: `${queryTargetUser.name} logged in ${timeframeLabel} at ${record.checkIn}.`,
+          data: {
+            text: `### 🕒 Dynamic Login Event Located\n\n* **Employee**: **${queryTargetUser.name}**\n* **Date / Timeframe**: ${timeframeLabel} (${targetDateStr})\n* **Login Time**: **${record.checkIn}**\n* **Status**: Present`
+          }
+        };
+      } else {
+        return {
+          authorized: true,
+          type: 'text',
+          speech: `No login check-in found for ${queryTargetUser.name} ${timeframeLabel}.`,
+          data: {
+            text: `No check-in record located for **${queryTargetUser.name}** on **${targetDateStr}** (${timeframeLabel}).`
+          }
+        };
+      }
+    }
+
+    if (isAttendanceStatus) {
+      const record = await Attendance.findOne({
+        where: { userId: queryTargetUser.id, date: targetDateStr }
+      });
+      const status = record ? record.status : 'Absent';
+      return {
+        authorized: true,
+        type: 'text',
+        speech: `${queryTargetUser.name}'s attendance status for ${timeframeLabel} is ${status}.`,
+        data: {
+          text: `### 📊 Dynamic Attendance Status\n\n* **Employee**: **${queryTargetUser.name}**\n* **Date**: ${targetDateStr} (${timeframeLabel})\n* **Status**: **${status}**`
+        }
+      };
+    }
+
     // FALLBACK / REASONING AGENT RESPONSE
     return {
       authorized: true,
