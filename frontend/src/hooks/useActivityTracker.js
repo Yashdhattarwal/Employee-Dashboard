@@ -121,8 +121,21 @@ const useActivityTracker = () => {
           // If the tab is visible/focused, or we detected local interactions, or system idle detector reports active
           const activeFlag = hasLocalActivity || (document.hasFocus() && document.visibilityState === 'visible') || isSystemActive.current;
 
+          let activityDescription = window.location.pathname || 'Home';
+          if (activeFlag) {
+            if (document.hasFocus() && document.visibilityState === 'visible') {
+              activityDescription = window.location.pathname || 'Home';
+            } else if (isSystemActive.current) {
+              activityDescription = 'Working on Excel / Word / Desktop App';
+            } else {
+              activityDescription = 'Active on External Browser Tab / YouTube';
+            }
+          } else {
+            activityDescription = 'System Idle (No Input)';
+          }
+
           const payload = {
-            currentPage: window.location.pathname || 'Home',
+            currentPage: activityDescription,
             clicks: clickCount.current,
             keys: keyCount.current,
             scrolls: scrollCount.current,
