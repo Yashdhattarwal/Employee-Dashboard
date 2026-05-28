@@ -60,6 +60,7 @@ const Attendance = sequelize.define('Attendance', {
 
 import Break from './Break.js';
 Attendance.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+User.hasMany(Attendance, { as: 'attendances', foreignKey: 'userId' });
 Attendance.hasMany(Break, { as: 'breaks', foreignKey: 'attendanceId' });
 Break.belongsTo(Attendance, { foreignKey: 'attendanceId' });
 
