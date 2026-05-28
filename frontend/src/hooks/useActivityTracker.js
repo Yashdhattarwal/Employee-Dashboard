@@ -14,8 +14,8 @@ const useActivityTracker = () => {
   const lastMoveTime = useRef(Date.now());
   const lastScrollTime = useRef(Date.now());
 
-  // System-wide active state track (fallback to true initially)
-  const isSystemActive = useRef(true);
+  // System-wide active state track (fallback to false initially)
+  const isSystemActive = useRef(false);
 
   useEffect(() => {
     // 1. Only run tracking for logged-in, non-admin users
@@ -118,8 +118,8 @@ const useActivityTracker = () => {
         try {
           const hasLocalActivity = (clickCount.current + keyCount.current + scrollCount.current + movementCount.current) > 0;
           
-          // If the tab is visible/focused, or we detected local interactions, or system idle detector reports active
-          const activeFlag = hasLocalActivity || (document.hasFocus() && document.visibilityState === 'visible') || isSystemActive.current;
+          // User is active only if there is local interaction or system-wide activity detected
+          const activeFlag = hasLocalActivity || isSystemActive.current;
 
           const activityDescription = activeFlag ? 'Working' : 'Not Working';
 
@@ -137,6 +137,11 @@ const useActivityTracker = () => {
           keyCount.current = 0;
           scrollCount.current = 0;
           movementCount.current = 0;
+
+          // Reset system active state to false for the next window if IdleDetector is not controlling it
+          if (!idleDetector) {
+            isSystemActive.current = false;
+          }
 
           await axios.post('/api/productivity/heartbeat', payload, { withCredentials: true });
         } catch (err) {
