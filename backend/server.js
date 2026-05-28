@@ -102,6 +102,14 @@ Expense.belongsTo(User, { foreignKey: 'userId' });
 const startServer = async () => {
   await connectDB();
   
+  // Force-sync ProductivityLog schema updates (such as FLOAT conversion)
+  try {
+    await ProductivityLog.sync({ alter: true });
+    console.log('Successfully completed ProductivityLog schema synchronization.');
+  } catch (error) {
+    console.error('Failed to synchronize ProductivityLog schema:', error.message);
+  }
+  
   // Safe automated migration for production
   try {
     const sequelizeInstance = (await import('./config/db.js')).default;

@@ -76,7 +76,11 @@ export const sendHeartbeat = async (req, res) => {
       }
     });
 
-    // 3. Accumulate interaction metrics
+    // 3. Accumulate interaction metrics & update actual browser/OS details
+    log.deviceType = device;
+    log.browserName = browser;
+    log.osName = os;
+
     log.clickCount = (log.clickCount || 0) + parseInt(clicks, 10);
     log.keyCount = (log.keyCount || 0) + parseInt(keys, 10);
     log.scrollCount = (log.scrollCount || 0) + parseInt(scrolls, 10);
@@ -175,6 +179,12 @@ export const getLiveMonitoring = async (req, res) => {
           }
         }
       } else {
+        // Query the latest login session log to get the real device, OS, and browser from login!
+        const latestSession = await UserSessionLog.findOne({
+          where: { userId: emp.id },
+          order: [['loginTime', 'DESC']]
+        });
+
         computedStatus = 'Away'; // No heartbeat yet, laptop is off
         prod = await ProductivityLog.create({
           userId: emp.id,
@@ -182,9 +192,9 @@ export const getLiveMonitoring = async (req, res) => {
           liveStatus: 'Away',
           activeMinutes: 0,
           idleMinutes: 0,
-          deviceType: 'Desktop',
-          browserName: 'Chrome',
-          osName: 'Windows',
+          deviceType: latestSession ? latestSession.deviceType : 'Desktop',
+          browserName: latestSession ? latestSession.browserName : 'Chrome',
+          osName: latestSession ? latestSession.osName : 'Windows',
           currentPage: 'Home',
           lastHeartbeat: new Date()
         });
