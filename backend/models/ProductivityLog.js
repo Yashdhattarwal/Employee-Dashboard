@@ -17,11 +17,11 @@ const ProductivityLog = sequelize.define('ProductivityLog', {
     allowNull: false,
   },
   activeMinutes: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   idleMinutes: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   clickCount: {

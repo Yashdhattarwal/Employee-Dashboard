@@ -86,10 +86,13 @@ export const sendHeartbeat = async (req, res) => {
       log.currentPage = currentPage;
     }
 
-    // 4. Calculate new live status: Active if laptop actively used, else Idle
+    // 4. Calculate new live status: Active if laptop actively used (locally or system-wide), else Idle
     let status = 'Active';
     const totalInteractions = parseInt(clicks, 10) + parseInt(keys, 10) + parseInt(scrolls, 10) + parseInt(movements, 10);
-    if (totalInteractions === 0) {
+    
+    const isClientSystemActive = req.body.isSystemActive === true || req.body.isSystemActive === 'true';
+
+    if (totalInteractions === 0 && !isClientSystemActive) {
       status = 'Idle';
     }
 

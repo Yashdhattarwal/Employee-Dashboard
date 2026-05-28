@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 
 const useActivityTracker = () => {
   const { user } = useContext(AuthContext);
-  const intervalRef = useRef(null);
+  const workerRef = useRef(null);
 
   // Interaction logs (refs to avoid re-triggering effects)
   const clickCount = useRef(0);
@@ -14,82 +14,144 @@ const useActivityTracker = () => {
   const lastMoveTime = useRef(Date.now());
   const lastScrollTime = useRef(Date.now());
 
+  // System-wide active state track (fallback to true initially)
+  const isSystemActive = useRef(true);
+
   useEffect(() => {
     // 1. Only run tracking for logged-in, non-admin users
     if (!user || user.role === 'admin') {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (workerRef.current) {
+        workerRef.current.postMessage('stop');
+        workerRef.current.terminate();
+        workerRef.current = null;
       }
       return;
     }
 
-    // Event listeners
+    // --- SYSTEM WIDE IDLE DETECTION (Chrome/Edge IdleDetector API) ---
+    let idleDetector = null;
+    const initIdleDetector = async () => {
+      if ('IdleDetector' in window) {
+        try {
+          const state = await IdleDetector.requestPermission();
+          if (state === 'granted') {
+            idleDetector = new IdleDetector();
+            idleDetector.addEventListener('change', () => {
+              // 'active' means user is actively interacting with their laptop (Word, Excel, anything!)
+              isSystemActive.current = idleDetector.userState === 'active';
+            });
+            await idleDetector.start({
+              threshold: 60000 // Minimum allowed threshold is 60 seconds
+            });
+          }
+        } catch (err) {
+          console.warn('System-wide IdleDetector failed to initialize:', err);
+        }
+      }
+    };
+    
+    initIdleDetector();
+
+    // --- LOCAL BROWSER WINDOW INTERACTION LISTENERS ---
     const handleMouseMove = () => {
       const now = Date.now();
-      if (now - lastMoveTime.current > 100) { // Throttle mousemove to 100ms
+      if (now - lastMoveTime.current > 100) {
         movementCount.current += 1;
         lastMoveTime.current = now;
       }
+      // If we move inside the browser tab, we are definitely active
+      isSystemActive.current = true;
     };
 
     const handleKeyDown = () => {
       keyCount.current += 1;
+      isSystemActive.current = true;
     };
 
     const handleClick = () => {
       clickCount.current += 1;
+      isSystemActive.current = true;
     };
 
     const handleScroll = () => {
       const now = Date.now();
-      if (now - lastScrollTime.current > 150) { // Throttle scroll to 150ms
+      if (now - lastScrollTime.current > 150) {
         scrollCount.current += 1;
         lastScrollTime.current = now;
       }
+      isSystemActive.current = true;
     };
 
-    // Attach listeners
+    // Attach local events
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('keydown', handleKeyDown, { passive: true });
     window.addEventListener('click', handleClick, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // 2. Start heartbeat interval every 15 seconds
-    intervalRef.current = setInterval(async () => {
-      try {
-        const isAway = document.visibilityState === 'hidden' || !document.hasFocus();
-        const payload = {
-          currentPage: window.location.pathname || 'Home',
-          clicks: clickCount.current,
-          keys: keyCount.current,
-          scrolls: scrollCount.current,
-          movements: movementCount.current,
-          isAway
-        };
+    // --- UN-THROTTLED INLINE WEB WORKER HEARTBEAT ---
+    const workerCode = `
+      let timer = null;
+      self.onmessage = (e) => {
+        if (e.data === 'start') {
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => {
+            self.postMessage('tick');
+          }, 15000);
+        } else if (e.data === 'stop') {
+          if (timer) clearInterval(timer);
+          timer = null;
+        }
+      };
+    `;
 
-        // Reset counts immediately to prevent race conditions during async post
-        clickCount.current = 0;
-        keyCount.current = 0;
-        scrollCount.current = 0;
-        movementCount.current = 0;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+    workerRef.current = worker;
 
-        await axios.post('/api/productivity/heartbeat', payload, { withCredentials: true });
-      } catch (err) {
-        // Silent catch to prevent console clutter during network switches/disconnects
-        console.warn('Activity tracker heartbeat failed:', err.message);
+    worker.onmessage = async (e) => {
+      if (e.data === 'tick') {
+        try {
+          const hasLocalActivity = (clickCount.current + keyCount.current + scrollCount.current + movementCount.current) > 0;
+          
+          // If the tab is visible/focused, or we detected local interactions, or system idle detector reports active
+          const activeFlag = hasLocalActivity || (document.hasFocus() && document.visibilityState === 'visible') || isSystemActive.current;
+
+          const payload = {
+            currentPage: window.location.pathname || 'Home',
+            clicks: clickCount.current,
+            keys: keyCount.current,
+            scrolls: scrollCount.current,
+            movements: movementCount.current,
+            isSystemActive: activeFlag
+          };
+
+          // Reset counts immediately
+          clickCount.current = 0;
+          keyCount.current = 0;
+          scrollCount.current = 0;
+          movementCount.current = 0;
+
+          await axios.post('/api/productivity/heartbeat', payload, { withCredentials: true });
+        } catch (err) {
+          console.warn('Background heartbeat failed:', err.message);
+        }
       }
-    }, 15000);
+    };
+
+    worker.postMessage('start');
 
     return () => {
-      // Cleanup
+      // Cleanup events
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleClick);
       window.removeEventListener('scroll', handleScroll);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+
+      // Cleanup worker
+      if (workerRef.current) {
+        workerRef.current.postMessage('stop');
+        workerRef.current.terminate();
+        workerRef.current = null;
       }
     };
   }, [user]);
