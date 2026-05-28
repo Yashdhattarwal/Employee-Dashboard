@@ -14,6 +14,7 @@ import ticketRoutes from './routes/ticketRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
+import productivityRoutes from './routes/productivityRoutes.js';
 import { processShiftAbsences } from './services/shiftService.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
@@ -22,6 +23,8 @@ import { Ticket, Comment } from './models/Ticket.js';
 import Notification from './models/Notification.js';
 import Acknowledgement from './models/Acknowledgement.js';
 import Expense from './models/Expense.js';
+import ProductivityLog from './models/ProductivityLog.js';
+import UserSessionLog from './models/UserSessionLog.js';
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
@@ -57,6 +60,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/productivity', productivityRoutes);
 
 // Static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

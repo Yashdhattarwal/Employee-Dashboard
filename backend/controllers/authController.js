@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import UserSessionLog from '../models/UserSessionLog.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
@@ -30,6 +31,37 @@ export const loginUser = async (req, res) => {
         return res.status(401).json({ message: 'Account is deactivated' });
       }
 
+      // Log Session
+      try {
+        const uaString = req.headers['user-agent'] || '';
+        const ua = uaString.toLowerCase();
+        let device = 'Desktop';
+        if (/mobi|android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua)) {
+          device = /ipad|tablet/i.test(ua) ? 'Tablet' : 'Mobile';
+        }
+        let browser = 'Chrome';
+        if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+        else if (/safari/i.test(ua) && !/chrome|crios/i.test(ua)) browser = 'Safari';
+        else if (/edg/i.test(ua)) browser = 'Edge';
+        else if (/opr|opera/i.test(ua)) browser = 'Opera';
+        
+        let os = 'Windows';
+        if (/macintosh|mac os x/i.test(ua)) os = 'macOS';
+        else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+        else if (/android/i.test(ua)) os = 'Android';
+        else if (/linux/i.test(ua)) os = 'Linux';
+
+        await UserSessionLog.create({
+          userId: user.id,
+          deviceType: device,
+          browserName: browser,
+          osName: os,
+          loginTime: new Date()
+        });
+      } catch (err) {
+        console.error('Session logging failed:', err.message);
+      }
+
       const token = generateToken(res, user.id);
       res.json({
         _id: user.id, // Keep _id for frontend compatibility
@@ -54,7 +86,22 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const logoutUser = (req, res) => {
+export const logoutUser = async (req, res) => {
+  try {
+    if (req.user) {
+      const activeSession = await UserSessionLog.findOne({
+        where: { userId: req.user.id, logoutTime: null },
+        order: [['loginTime', 'DESC']]
+      });
+      if (activeSession) {
+        activeSession.logoutTime = new Date();
+        await activeSession.save();
+      }
+    }
+  } catch (err) {
+    console.error('Logout logging failed:', err.message);
+  }
+
   res.cookie('jwt', '', {
     httpOnly: true,
     expires: new Date(0),

@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LayoutDashboard, Users, Calendar, Ticket, FileText, Settings, Bell, X, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Ticket, FileText, Settings, Bell, X, DollarSign, Activity } from 'lucide-react';
 import clsx from 'clsx';
 
 const Sidebar = ({ isOpen, setIsOpen, isCollapsed }) => {
@@ -34,7 +34,10 @@ const Sidebar = ({ isOpen, setIsOpen, isCollapsed }) => {
     );
 
     if (user?.role === 'admin') {
-      items.push({ name: 'User Management', path: `/${base}/users`, icon: Users });
+      items.push(
+        { name: 'User Management', path: `/${base}/users`, icon: Users },
+        { name: 'Work Tracking', path: `/${base}/work-tracking`, icon: Activity }
+      );
     }
 
     if (user?.role === 'manager' || user?.role === 'teamlead') {

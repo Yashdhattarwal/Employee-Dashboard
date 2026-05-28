@@ -14,6 +14,8 @@ import Users from './pages/Users';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import Payroll from './pages/Payroll';
+import useActivityTracker from './hooks/useActivityTracker';
+import WorkTracking from './pages/WorkTracking';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useContext(AuthContext);
@@ -40,6 +42,7 @@ const RoleBasedRoute = () => {
 };
 
 function App() {
+  useActivityTracker();
   return (
     <Router>
       <Routes>
@@ -50,6 +53,7 @@ function App() {
         <Route element={<Layout />}>
           {/* Admin Routes */}
           <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/work-tracking" element={<ProtectedRoute allowedRoles={['admin']}><WorkTracking /></ProtectedRoute>} />
           <Route path="/admin/attendance" element={<ProtectedRoute allowedRoles={['admin']}><Attendance /></ProtectedRoute>} />
           <Route path="/admin/team-attendance" element={<ProtectedRoute allowedRoles={['admin']}><TeamAttendance /></ProtectedRoute>} />
           <Route path="/admin/leaves" element={<ProtectedRoute allowedRoles={['admin']}><Leaves /></ProtectedRoute>} />
