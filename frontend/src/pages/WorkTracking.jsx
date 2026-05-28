@@ -78,6 +78,27 @@ const WorkTracking = () => {
     }
   };
 
+  const liveSelectedEmp = selectedEmp ? employees.find(e => e.id === selectedEmp.id) || selectedEmp : null;
+
+  useEffect(() => {
+    if (!selectedEmp) return;
+
+    const fetchSelectedAnalytics = async () => {
+      try {
+        const { data } = await axios.get(`/api/productivity/analytics/${selectedEmp.id}`, { withCredentials: true });
+        setEmpAnalytics(data);
+      } catch (err) {
+        console.error('Failed to refresh selected employee analytics:', err);
+      }
+    };
+
+    const interval = setInterval(() => {
+      fetchSelectedAnalytics();
+    }, 15000); // 15 seconds auto-refresh for dynamic slide-over metrics
+
+    return () => clearInterval(interval);
+  }, [selectedEmp]);
+
   // Filter computations
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -376,7 +397,7 @@ const WorkTracking = () => {
       </div>
 
       {/* Detailed Analytics Slide-over Modal */}
-      {selectedEmp && (
+      {selectedEmp && liveSelectedEmp && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-4xl bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
             {/* Modal Header */}
@@ -389,12 +410,12 @@ const WorkTracking = () => {
                   <ArrowLeft size={20} />
                 </button>
                 <div>
-                  <h2 className="text-xl font-bold">{selectedEmp.name}</h2>
-                  <p className="text-primary-foreground/80 text-xs mt-0.5">{selectedEmp.employeeId} • {selectedEmp.designation} • Active Timezone: {selectedEmp.timezone}</p>
+                  <h2 className="text-xl font-bold">{liveSelectedEmp.name}</h2>
+                  <p className="text-primary-foreground/80 text-xs mt-0.5">{liveSelectedEmp.employeeId} • {liveSelectedEmp.designation} • Active Timezone: {liveSelectedEmp.timezone}</p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-white/20 text-white border border-white/30 rounded-full text-xs font-bold uppercase tracking-wider animate-pulse">
-                {selectedEmp.status}
+              <span className="px-3 py-1 bg-white/20 text-white border border-white/30 rounded-full text-xs font-bold uppercase tracking-wider animate-pulse" style={{ backgroundColor: `${STATUS_COLORS[liveSelectedEmp.status]}30`, borderColor: STATUS_COLORS[liveSelectedEmp.status] }}>
+                {liveSelectedEmp.status}
               </span>
             </div>
 

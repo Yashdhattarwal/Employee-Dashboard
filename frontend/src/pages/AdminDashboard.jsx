@@ -102,6 +102,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchStats();
     fetchEmployeesList();
+
+    const interval = setInterval(() => {
+      fetchStats();
+    }, 15000); // 15 seconds silent auto-refresh for real-time KPIs
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -110,6 +116,12 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchTrendData();
+
+    const interval = setInterval(() => {
+      fetchTrendData();
+    }, 15000); // 15 seconds silent auto-refresh for real-time trend charts
+
+    return () => clearInterval(interval);
   }, [selectedEmpTrend, selectedTimeline]);
 
   const generateReport = () => {
