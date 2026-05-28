@@ -81,6 +81,21 @@ export const sendHeartbeat = async (req, res) => {
     log.browserName = browser;
     log.osName = os;
 
+    // Ensure they have an active UserSessionLog
+    const activeSession = await UserSessionLog.findOne({
+      where: { userId, logoutTime: null }
+    });
+
+    if (!activeSession) {
+      await UserSessionLog.create({
+        userId,
+        deviceType: device,
+        browserName: browser,
+        osName: os,
+        loginTime: new Date()
+      });
+    }
+
     log.clickCount = (log.clickCount || 0) + parseInt(clicks, 10);
     log.keyCount = (log.keyCount || 0) + parseInt(keys, 10);
     log.scrollCount = (log.scrollCount || 0) + parseInt(scrolls, 10);
@@ -320,8 +335,8 @@ export const getDetailedAnalytics = async (req, res) => {
       const total = active + idle;
       return {
         date: log.date,
-        activeMinutes: Math.round(active),
-        idleMinutes: Math.round(idle),
+        activeMinutes: Math.round(active * 10) / 10,
+        idleMinutes: Math.round(idle * 10) / 10,
         productivityScore: total > 0 ? Math.round((active / total) * 100) : 100,
         interactions: (log.clickCount || 0) + (log.keyCount || 0) + (log.scrollCount || 0)
       };
@@ -343,8 +358,8 @@ export const getDetailedAnalytics = async (req, res) => {
       sessionLogs,
       todayAttendance,
       historicalSummary: {
-        totalActiveMinutes: Math.round(totalActiveMins),
-        totalIdleMinutes: Math.round(totalIdleMins),
+        totalActiveMinutes: Math.round(totalActiveMins * 10) / 10,
+        totalIdleMinutes: Math.round(totalIdleMins * 10) / 10,
         averageProductivity: (totalActiveMins + totalIdleMins) > 0 
           ? Math.round((totalActiveMins / (totalActiveMins + totalIdleMins)) * 100) 
           : 100,
