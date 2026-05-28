@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend 
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend 
 } from 'recharts';
 import { convertToUserTimezone } from '../utils/timezone';
 
@@ -524,20 +524,20 @@ const WorkTracking = () => {
                         </div>
                       </div>
 
-                      {/* Daily Active/Idle Bar Chart */}
+                      {/* Daily Active/Idle Line Chart */}
                       <div className="glass-panel p-5">
                         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">Daily Working Minutes Breakdown</h3>
                         <div className="w-full h-64">
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={empAnalytics.historicalData}>
+                            <LineChart data={empAnalytics.historicalData}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis dataKey="date" />
                               <YAxis />
                               <Tooltip />
                               <Legend />
-                              <Bar dataKey="activeMinutes" stackId="a" fill="#10b981" name="Active minutes" />
-                              <Bar dataKey="idleMinutes" stackId="a" fill="#64748b" name="Idle minutes" />
-                            </BarChart>
+                              <Line type="monotone" dataKey="activeMinutes" stroke="#10b981" strokeWidth={2} name="Active minutes" />
+                              <Line type="monotone" dataKey="idleMinutes" stroke="#64748b" strokeWidth={2} name="Idle minutes" />
+                            </LineChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
