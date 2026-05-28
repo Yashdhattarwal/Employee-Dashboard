@@ -178,27 +178,64 @@ const WorkTracking = () => {
 
       {/* Analytics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="glass-panel p-4 text-center border-l-4 border-l-success">
+        <div 
+          onClick={() => setStatusFilter(statusFilter === 'Active' ? 'all' : 'Active')}
+          className={`glass-panel p-4 text-center border-l-4 border-l-success cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
+            statusFilter === 'Active' ? 'ring-2 ring-emerald-500 ring-offset-1 bg-emerald-50/10 border-emerald-500' : ''
+          }`}
+        >
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Users</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Active')}</p>
         </div>
-        <div className="glass-panel p-4 text-center border-l-4 border-l-amber-500">
+
+        <div 
+          onClick={() => setStatusFilter(statusFilter === 'Idle' ? 'all' : 'Idle')}
+          className={`glass-panel p-4 text-center border-l-4 border-l-amber-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
+            statusFilter === 'Idle' ? 'ring-2 ring-amber-500 ring-offset-1 bg-amber-50/10 border-amber-500' : ''
+          }`}
+        >
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Idle Users</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Idle')}</p>
         </div>
-        <div className="glass-panel p-4 text-center border-l-4 border-l-purple-500">
+
+        <div 
+          onClick={() => setStatusFilter(statusFilter === 'Away' ? 'all' : 'Away')}
+          className={`glass-panel p-4 text-center border-l-4 border-l-purple-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
+            statusFilter === 'Away' ? 'ring-2 ring-purple-500 ring-offset-1 bg-purple-50/10 border-purple-500' : ''
+          }`}
+        >
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Away Users</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Away')}</p>
         </div>
-        <div className="glass-panel p-4 text-center border-l-4 border-l-blue-500">
+
+        <div 
+          onClick={() => setStatusFilter(statusFilter === 'Break' ? 'all' : 'Break')}
+          className={`glass-panel p-4 text-center border-l-4 border-l-blue-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
+            statusFilter === 'Break' ? 'ring-2 ring-blue-500 ring-offset-1 bg-blue-50/10 border-blue-500' : ''
+          }`}
+        >
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Break Mode</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Break')}</p>
         </div>
-        <div className="glass-panel p-4 text-center border-l-4 border-l-slate-400">
+
+        <div 
+          onClick={() => setStatusFilter('all')}
+          className={`glass-panel p-4 text-center border-l-4 border-l-slate-400 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
+            statusFilter === 'all' ? 'ring-2 ring-slate-500 ring-offset-1 bg-slate-50/10 border-slate-500' : ''
+          }`}
+        >
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Sessions</p>
           <p className="text-2xl font-bold text-primary mt-1">{getOnlineSessions()}</p>
         </div>
-        <div className="glass-panel p-4 text-center border-l-4 border-l-violet-600">
+
+        <div 
+          onClick={() => {
+            setStatusFilter('all');
+            setSearchTerm('');
+            setDeviceFilter('all');
+          }}
+          className="glass-panel p-4 text-center border-l-4 border-l-violet-600 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none hover:bg-violet-50/5"
+        >
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Productivity</p>
           <p className="text-2xl font-bold text-violet-600 mt-1">{getAvgProductivity()}%</p>
         </div>

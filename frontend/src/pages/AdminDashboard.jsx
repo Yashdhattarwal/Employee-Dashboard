@@ -48,6 +48,13 @@ const AdminDashboard = () => {
   const [finLoading, setFinLoading] = useState(false);
   const [selectedEodRecord, setSelectedEodRecord] = useState(null);
 
+  // Productivity Trend States
+  const [employeesList, setEmployeesList] = useState([]);
+  const [selectedEmpTrend, setSelectedEmpTrend] = useState('all');
+  const [selectedTimeline, setSelectedTimeline] = useState('daily');
+  const [trendData, setTrendData] = useState([]);
+  const [trendLoading, setTrendLoading] = useState(false);
+
   const fetchStats = async () => {
     try {
       const { data } = await axios.get('/api/users/stats', { withCredentials: true });
@@ -55,6 +62,28 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error(err);
       alert('Stats fetch failed: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const fetchEmployeesList = async () => {
+    try {
+      const { data } = await axios.get('/api/users', { withCredentials: true });
+      const nonAdmins = data.filter(u => u.role !== 'admin');
+      setEmployeesList(nonAdmins);
+    } catch (err) {
+      console.error('Failed to load employees:', err);
+    }
+  };
+
+  const fetchTrendData = async () => {
+    try {
+      setTrendLoading(true);
+      const { data } = await axios.get(`/api/productivity/dashboard-trend?employeeId=${selectedEmpTrend}&timeline=${selectedTimeline}`, { withCredentials: true });
+      setTrendData(data);
+    } catch (err) {
+      console.error('Failed to load trend data:', err);
+    } finally {
+      setTrendLoading(false);
     }
   };
 
@@ -72,11 +101,16 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchStats();
+    fetchEmployeesList();
   }, []);
 
   useEffect(() => {
     fetchFinancialStats();
   }, [selectedMonth]);
+
+  useEffect(() => {
+    fetchTrendData();
+  }, [selectedEmpTrend, selectedTimeline]);
 
   const generateReport = () => {
     const csvContent = [
@@ -233,6 +267,105 @@ const AdminDashboard = () => {
               </ResponsiveContainer>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Productivity & Work Trends */}
+      <div className="glass-panel p-6 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">Productivity & Interaction Trends</h2>
+            <p className="text-sm text-slate-500">Track active minutes, idle minutes and consistency metrics over time</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Employee Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Employee:</label>
+              <select 
+                value={selectedEmpTrend} 
+                onChange={(e) => setSelectedEmpTrend(e.target.value)}
+                className="input-field py-1 px-3 text-xs font-bold w-48"
+              >
+                <option value="all">All Employees</option>
+                {employeesList.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name} ({emp.employeeId})</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Timeline Filter */}
+            <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
+              <button 
+                onClick={() => setSelectedTimeline('daily')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  selectedTimeline === 'daily' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Daily
+              </button>
+              <button 
+                onClick={() => setSelectedTimeline('weekly')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  selectedTimeline === 'weekly' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Weekly
+              </button>
+              <button 
+                onClick={() => setSelectedTimeline('monthly')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                  selectedTimeline === 'monthly' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-[350px] relative">
+          {trendLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10 rounded-xl">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          )}
+
+          {trendData.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+              <Clock size={48} className="opacity-20" />
+              <p className="text-sm font-semibold">No recorded interaction logs available matching filters</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorIdle" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#64748b" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#64748b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10 }} />
+                <Tooltip 
+                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                  cursor={{stroke: '#10b981', strokeWidth: 1.5, strokeDasharray: '3 3'}}
+                  formatter={(value, name) => [
+                    `${value} mins`,
+                    name === 'active' ? 'Active Time' : name === 'idle' ? 'Idle Time' : name
+                  ]}
+                />
+                <Legend verticalAlign="top" height={36} />
+                <Area type="monotone" dataKey="active" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorActive)" name="active" />
+                <Area type="monotone" dataKey="idle" stroke="#64748b" strokeWidth={1.5} fillOpacity={1} fill="url(#colorIdle)" name="idle" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 

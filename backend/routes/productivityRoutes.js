@@ -4,7 +4,8 @@ import {
   getLiveMonitoring, 
   getDetailedAnalytics, 
   getDeviceStats, 
-  exportProductivityReports 
+  exportProductivityReports,
+  getDashboardTrend
 } from '../controllers/productivityController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -18,5 +19,6 @@ router.get('/live', protect, admin, getLiveMonitoring);
 router.get('/analytics/:userId', protect, admin, getDetailedAnalytics);
 router.get('/devices', protect, admin, getDeviceStats);
 router.get('/export', protect, admin, exportProductivityReports);
+router.get('/dashboard-trend', protect, admin, getDashboardTrend);
 
 export default router;

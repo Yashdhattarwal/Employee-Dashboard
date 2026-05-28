@@ -56,7 +56,7 @@ export const sendHeartbeat = async (req, res) => {
       });
     }
 
-    const { currentPage, clicks = 0, keys = 0, scrolls = 0, movements = 0, isAway = false, statusOverride } = req.body;
+    const { currentPage, clicks = 0, keys = 0, scrolls = 0, movements = 0 } = req.body;
 
     // Detect device, browser, OS
     const uaString = req.headers['user-agent'] || '';
@@ -86,14 +86,10 @@ export const sendHeartbeat = async (req, res) => {
       log.currentPage = currentPage;
     }
 
-    // 4. Calculate new live status
-    // Default config: heartbeat happens every 15s. Each heartbeat represents 0.25 minutes.
+    // 4. Calculate new live status: Active if laptop actively used, else Idle
     let status = 'Active';
-    if (statusOverride === 'On Break' || attendance.status === 'On Break') {
-      status = 'Break';
-    } else if (isAway) {
-      status = 'Away';
-    } else if (parseInt(clicks, 10) + parseInt(keys, 10) + parseInt(scrolls, 10) + parseInt(movements, 10) === 0) {
+    const totalInteractions = parseInt(clicks, 10) + parseInt(keys, 10) + parseInt(scrolls, 10) + parseInt(movements, 10);
+    if (totalInteractions === 0) {
       status = 'Idle';
     }
 
@@ -104,7 +100,6 @@ export const sendHeartbeat = async (req, res) => {
     if (status === 'Active') {
       log.activeMinutes = (log.activeMinutes || 0) + 0.25;
     } else {
-      // Break, Away, and Idle count towards Idle Minutes
       log.idleMinutes = (log.idleMinutes || 0) + 0.25;
     }
 
@@ -129,7 +124,7 @@ export const getLiveMonitoring = async (req, res) => {
   try {
     const todayStr = new Date().toLocaleDateString('en-CA');
 
-    // Fetch all employees (non-admin role)
+    // Fetch only employees (non-admin role) who are currently clocked in
     const employees = await User.findAll({
       where: { 
         role: { [Op.ne]: 'admin' }
@@ -139,8 +134,12 @@ export const getLiveMonitoring = async (req, res) => {
         {
           model: Attendance,
           as: 'attendances',
-          where: { date: todayStr },
-          required: false
+          where: { 
+            date: todayStr,
+            checkIn: { [Op.ne]: null },
+            checkOut: null
+          },
+          required: true // Strict filter for clocked-in users only
         },
         {
           model: ProductivityLog,
@@ -152,31 +151,40 @@ export const getLiveMonitoring = async (req, res) => {
     });
 
     const now = new Date();
-    const liveFeed = employees.map(emp => {
+    const liveFeed = await Promise.all(employees.map(async (emp) => {
       const att = emp.attendances && emp.attendances[0];
-      const prod = emp.productivityLogs && emp.productivityLogs[0];
+      let prod = emp.productivityLogs && emp.productivityLogs[0];
 
-      let computedStatus = 'Offline';
+      let computedStatus = 'Away';
       let lastActive = null;
-      let checkInTime = null;
+      let checkInTime = att ? att.checkIn : '-';
 
-      if (att) {
-        checkInTime = att.checkIn;
-        if (att.checkOut) {
-          computedStatus = 'Clocked Out';
-        } else if (att.status === 'On Break') {
-          computedStatus = 'Break';
-        } else if (prod && prod.lastHeartbeat) {
-          lastActive = prod.lastHeartbeat;
-          const secondsSinceHeartbeat = (now - new Date(prod.lastHeartbeat)) / 1000;
-          if (secondsSinceHeartbeat <= 45) {
-            computedStatus = prod.liveStatus; // 'Active', 'Idle', 'Away'
-          } else {
-            computedStatus = 'Offline';
-          }
+      if (prod) {
+        lastActive = prod.lastHeartbeat;
+        const secondsSinceHeartbeat = (now - new Date(prod.lastHeartbeat)) / 1000;
+        if (secondsSinceHeartbeat <= 45) {
+          computedStatus = prod.liveStatus;
         } else {
-          computedStatus = 'Offline';
+          computedStatus = 'Away'; // Laptop is off
+          if (prod.liveStatus !== 'Away') {
+            prod.liveStatus = 'Away';
+            await prod.save();
+          }
         }
+      } else {
+        computedStatus = 'Away'; // No heartbeat yet, laptop is off
+        prod = await ProductivityLog.create({
+          userId: emp.id,
+          date: todayStr,
+          liveStatus: 'Away',
+          activeMinutes: 0,
+          idleMinutes: 0,
+          deviceType: 'Desktop',
+          browserName: 'Chrome',
+          osName: 'Windows',
+          currentPage: 'Home',
+          lastHeartbeat: new Date()
+        });
       }
 
       const activeMin = prod ? parseFloat(prod.activeMinutes || 0) : 0;
@@ -192,7 +200,7 @@ export const getLiveMonitoring = async (req, res) => {
         designation: emp.designation,
         timezone: emp.timezone || 'IST',
         status: computedStatus,
-        clockInTime: checkInTime || '-',
+        clockInTime: checkInTime,
         lastActive: lastActive,
         currentPage: prod ? prod.currentPage : 'Home',
         deviceType: prod ? prod.deviceType : 'Desktop',
@@ -203,7 +211,7 @@ export const getLiveMonitoring = async (req, res) => {
         totalSessionMinutes: Math.round(totalSession * 10) / 10,
         productivityPercentage: prodPercentage
       };
-    });
+    }));
 
     res.json(liveFeed);
   } catch (error) {
@@ -405,6 +413,73 @@ export const exportProductivityReports = async (req, res) => {
     });
 
     res.json(exportData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Get aggregated productivity trend metrics for Admin Dashboard
+ * timeline: daily, weekly, monthly
+ */
+export const getDashboardTrend = async (req, res) => {
+  try {
+    const { employeeId, timeline = 'daily' } = req.query;
+
+    const where = {};
+    if (employeeId && employeeId !== 'all') {
+      where.userId = employeeId;
+    }
+
+    const logs = await ProductivityLog.findAll({
+      where,
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['name', 'employeeId']
+      }],
+      order: [['date', 'ASC']]
+    });
+
+    const grouped = {};
+    logs.forEach(log => {
+      let key = log.date;
+      if (timeline === 'weekly') {
+        const d = new Date(log.date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const startOfWeek = new Date(d.setDate(diff));
+        key = `Week of ${startOfWeek.toISOString().slice(5, 10)}`; // MM-DD format for labels
+      } else if (timeline === 'monthly') {
+        key = log.date.slice(0, 7); // YYYY-MM
+      }
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          label: key,
+          activeMinutes: 0,
+          idleMinutes: 0,
+          total: 0
+        };
+      }
+
+      grouped[key].activeMinutes += parseFloat(log.activeMinutes || 0);
+      grouped[key].idleMinutes += parseFloat(log.idleMinutes || 0);
+    });
+
+    const data = Object.values(grouped).map(item => {
+      const active = Math.round(item.activeMinutes);
+      const idle = Math.round(item.idleMinutes);
+      const total = active + idle;
+      return {
+        label: item.label,
+        active: active,
+        idle: idle,
+        productivityPercentage: total > 0 ? Math.round((active / total) * 100) : 100
+      };
+    });
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
