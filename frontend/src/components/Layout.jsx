@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import DashMind from './DashMind';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -41,6 +42,8 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+      
+      <DashMind />
     </div>
   );
 };

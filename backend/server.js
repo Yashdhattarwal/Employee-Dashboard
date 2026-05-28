@@ -15,6 +15,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import productivityRoutes from './routes/productivityRoutes.js';
+import dashmindRoutes from './routes/dashmindRoutes.js';
 import { processShiftAbsences } from './services/shiftService.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
@@ -61,6 +62,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/productivity', productivityRoutes);
+app.use('/api/dashmind', dashmindRoutes);
 
 // Static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
