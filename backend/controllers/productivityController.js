@@ -185,11 +185,11 @@ export const getLiveMonitoring = async (req, res) => {
         lastActive = prod.lastHeartbeat;
         const secondsSinceHeartbeat = (now - new Date(prod.lastHeartbeat)) / 1000;
         if (secondsSinceHeartbeat <= 45) {
-          computedStatus = prod.liveStatus;
+          computedStatus = prod.liveStatus === 'Active' ? 'Active' : 'Idle';
         } else {
-          computedStatus = 'Away'; // Laptop is off
-          if (prod.liveStatus !== 'Away') {
-            prod.liveStatus = 'Away';
+          computedStatus = 'Idle'; // Laptop is off/away
+          if (prod.liveStatus !== 'Idle') {
+            prod.liveStatus = 'Idle';
             await prod.save();
           }
         }
@@ -200,17 +200,17 @@ export const getLiveMonitoring = async (req, res) => {
           order: [['loginTime', 'DESC']]
         });
 
-        computedStatus = 'Away'; // No heartbeat yet, laptop is off
+        computedStatus = 'Idle'; // No heartbeat yet, laptop is off
         prod = await ProductivityLog.create({
           userId: emp.id,
           date: todayStr,
-          liveStatus: 'Away',
+          liveStatus: 'Idle',
           activeMinutes: 0,
           idleMinutes: 0,
           deviceType: latestSession ? latestSession.deviceType : 'Desktop',
           browserName: latestSession ? latestSession.browserName : 'Chrome',
           osName: latestSession ? latestSession.osName : 'Windows',
-          currentPage: 'Home',
+          currentPage: 'Not Working',
           lastHeartbeat: new Date()
         });
       }
@@ -230,7 +230,7 @@ export const getLiveMonitoring = async (req, res) => {
         status: computedStatus,
         clockInTime: checkInTime,
         lastActive: lastActive,
-        currentPage: prod ? prod.currentPage : 'Home',
+        currentPage: computedStatus === 'Active' ? 'Working' : 'Not Working',
         deviceType: prod ? prod.deviceType : 'Desktop',
         browserName: prod ? prod.browserName : 'Chrome',
         osName: prod ? prod.osName : 'Windows',

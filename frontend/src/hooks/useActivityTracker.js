@@ -121,16 +121,7 @@ const useActivityTracker = () => {
           // If the tab is visible/focused, or we detected local interactions, or system idle detector reports active
           const activeFlag = hasLocalActivity || (document.hasFocus() && document.visibilityState === 'visible') || isSystemActive.current;
 
-          let activityDescription = window.location.pathname || 'Home';
-          if (activeFlag) {
-            if (document.hasFocus() && document.visibilityState === 'visible') {
-              activityDescription = window.location.pathname || 'Home';
-            } else {
-              activityDescription = 'Active on Desktop App / other Tab (Excel/ChatGPT/Word/etc.)';
-            }
-          } else {
-            activityDescription = 'System Idle (No Input)';
-          }
+          const activityDescription = activeFlag ? 'Working' : 'Not Working';
 
           const payload = {
             currentPage: activityDescription,

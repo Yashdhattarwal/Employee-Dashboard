@@ -110,7 +110,7 @@ const WorkTracking = () => {
   });
 
   const getStatusCount = (status) => employees.filter(e => e.status === status).length;
-  const getOnlineSessions = () => employees.filter(e => ['Active', 'Idle', 'Away', 'Break'].includes(e.status)).length;
+  const getOnlineSessions = () => employees.filter(e => ['Active', 'Idle'].includes(e.status)).length;
   
   const getAvgProductivity = () => {
     const tracked = employees.filter(e => e.totalSessionMinutes > 0);
@@ -198,14 +198,14 @@ const WorkTracking = () => {
       </div>
 
       {/* Analytics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div 
           onClick={() => setStatusFilter(statusFilter === 'Active' ? 'all' : 'Active')}
           className={`glass-panel p-4 text-center border-l-4 border-l-success cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
             statusFilter === 'Active' ? 'ring-2 ring-emerald-500 ring-offset-1 bg-emerald-50/10 border-emerald-500' : ''
           }`}
         >
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Users</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active (Working)</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Active')}</p>
         </div>
 
@@ -215,28 +215,8 @@ const WorkTracking = () => {
             statusFilter === 'Idle' ? 'ring-2 ring-amber-500 ring-offset-1 bg-amber-50/10 border-amber-500' : ''
           }`}
         >
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Idle Users</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Idle / Away (Not Working)</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Idle')}</p>
-        </div>
-
-        <div 
-          onClick={() => setStatusFilter(statusFilter === 'Away' ? 'all' : 'Away')}
-          className={`glass-panel p-4 text-center border-l-4 border-l-purple-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
-            statusFilter === 'Away' ? 'ring-2 ring-purple-500 ring-offset-1 bg-purple-50/10 border-purple-500' : ''
-          }`}
-        >
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Away Users</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Away')}</p>
-        </div>
-
-        <div 
-          onClick={() => setStatusFilter(statusFilter === 'Break' ? 'all' : 'Break')}
-          className={`glass-panel p-4 text-center border-l-4 border-l-blue-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 select-none ${
-            statusFilter === 'Break' ? 'ring-2 ring-blue-500 ring-offset-1 bg-blue-50/10 border-blue-500' : ''
-          }`}
-        >
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Break Mode</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{getStatusCount('Break')}</p>
         </div>
 
         <div 
@@ -284,10 +264,6 @@ const WorkTracking = () => {
             <option value="all">All Statuses</option>
             <option value="Active">Active</option>
             <option value="Idle">Idle</option>
-            <option value="Away">Away</option>
-            <option value="Break">Break</option>
-            <option value="Offline">Offline</option>
-            <option value="Clocked Out">Clocked Out</option>
           </select>
 
           <select 
